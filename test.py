@@ -15,6 +15,10 @@ WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 
+# TODO
+# Add Parent Class Circles
+# where infected, removed and susceptible are children classes each with an array keeping track of its objects
+
 
 class Circle:
     radius = 5
