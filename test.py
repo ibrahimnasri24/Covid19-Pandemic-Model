@@ -67,7 +67,7 @@ class Circle:
         angle = 7
         for c in circles:
             if c.x < boundary[0] and not (c.direction > 300 or c.direction < 60):
-                c.direction = c.direction + angle
+                c.direction = c.direction + angle  # if c.direction > 180 else -angle
             if c.x > boundary[2] and not (c.direction > 120 and c.direction < 240):
                 c.direction = c.direction + angle
             if c.y < boundary[1] and not (c.direction > 30 and c.direction < 150):
