@@ -1,5 +1,6 @@
 import random as rn
 import math
+from tabnanny import check
 import pygame as pyg
 from pygame.locals import *
 import numpy as np
@@ -11,6 +12,8 @@ WINDOWHEIGHT = 800
 infection_radius = 10
 rows, cols = (int(WINDOWWIDTH / infection_radius), int(WINDOWHEIGHT / infection_radius))
 next_move_grid = [[[] for j in range(rows)] for i in range(cols)]
+
+possible_collisions = []
 
 
 BLUE = (41, 128, 185)
@@ -50,29 +53,36 @@ class Circle:
             c.x += c.v[0]
             c.y += c.v[1]
             c.locate_grid()
-            c.social_dist(c.get_surrounding_circles())
+        Circle.social_dist()
 
-    def social_dist(this, surrounding_circles):
-        for c in surrounding_circles:
-            if this.dist_from_radius(c, this.social_dist_radius) < 0:
-                n = [c.x - this.x, c.y - this.y] #normal vector
-                n_mag = math.sqrt(n[0]**2 + n[1]**2)
-                if(n_mag > 0):
-                    un = [n[0]/n_mag, n[1]/n_mag] #unit normal vector un = n/|n|
-                    ut= [-un[1], un[0]] #unit tangential vector which is ut={-uny, unx}
-                    #before collision
-                    v1n = np.dot(un, this.v)
-                    v1t = np.dot(ut, this.v)
-                    v2n = np.dot(un, c.v)
-                    v2t = np.dot(ut, c.v)
-                    #after collision
-                    v1ts = [v1t*ut[0], v1t* ut[1]]
-                    v1ns = [v2n*un[0], v2n* un[1]]
-                    v2ns = [v1n*un[0], v1n* un[1]]
-                    v2ts = [v2t*ut[0], v2t* ut[1]]
+    def social_dist():
+        nb_possible_collisions = len(possible_collisions)
+        i = 0
+        while(i < nb_possible_collisions):
+            circles = possible_collisions[i]
+            c1 = circles[0]
+            n = len(circles)
+            for c2 in circles:
+                if c1.dist_from_radius(c2, c1.social_dist_radius) < 0:
+                    n = [c2.x - c1.x, c2.y - c1.y] #normal vector
+                    n_mag = math.sqrt(n[0]**2 + n[1]**2)
+                    if(n_mag > 0):
+                        un = [n[0]/n_mag, n[1]/n_mag] #unit normal vector un = n/|n|
+                        ut= [-un[1], un[0]] #unit tangential vector which is ut={-uny, unx}
+                        #before collision
+                        v1n = np.dot(un, c1.v)
+                        v1t = np.dot(ut, c1.v)
+                        v2n = np.dot(un, c2.v)
+                        v2t = np.dot(ut, c2.v)
+                        #after collision
+                        v1ts = [v1t*ut[0], v1t* ut[1]]
+                        v1ns = [v2n*un[0], v2n* un[1]]
+                        v2ns = [v1n*un[0], v1n* un[1]]
+                        v2ts = [v2t*ut[0], v2t* ut[1]]
 
-                    this.v = [v1ts[0] + v1ns[0], v1ts[1] + v1ns[1]]
-                    c.v = [v2ns[0] + v2ts[0], v2ns[1] + v2ts[1]]
+                        c1.v = [v1ts[0] + v1ns[0], v1ts[1] + v1ns[1]]
+                        c2.v = [v2ns[0] + v2ts[0], v2ns[1] + v2ts[1]]
+        i += 1
 
     def draw(circles, surface):
         for c in circles:
@@ -98,21 +108,64 @@ class Circle:
         circle_right_grid = int((this.x + 5) / rows)
         circle_left_grid = int((this.x - 5) / rows)
         if circle_up_grid == circle_down_grid and circle_right_grid == circle_left_grid:
+            old_len = len(next_move_grid[circle_right_grid][circle_up_grid])
             next_move_grid[circle_right_grid][circle_up_grid].append(this)
+            if(old_len < 2):
+                if len(next_move_grid[circle_right_grid][circle_up_grid]) > 1:
+                    possible_collisions.append(next_move_grid[circle_right_grid][circle_up_grid])
         elif circle_right_grid == circle_left_grid:
+            old_len = len(next_move_grid[circle_right_grid][circle_up_grid])
             next_move_grid[circle_right_grid][circle_up_grid].append(this)
+            if(old_len < 2):
+                if len(next_move_grid[circle_right_grid][circle_up_grid]) > 1:
+                    possible_collisions.append(next_move_grid[circle_right_grid][circle_up_grid])
+            
+            old_len = len(next_move_grid[circle_right_grid][circle_down_grid])
             next_move_grid[circle_right_grid][circle_down_grid].append(this)
+            if(old_len < 2):
+                if len(next_move_grid[circle_right_grid][circle_down_grid]) > 1:
+                    possible_collisions.append(next_move_grid[circle_right_grid][circle_down_grid])
         elif circle_up_grid == circle_down_grid:
+            old_len = len(next_move_grid[circle_right_grid][circle_up_grid])
             next_move_grid[circle_right_grid][circle_up_grid].append(this)
+            if(old_len < 2):
+                if len(next_move_grid[circle_right_grid][circle_up_grid]) > 1:
+                    possible_collisions.append(next_move_grid[circle_right_grid][circle_up_grid])
+            
+            old_len = len(next_move_grid[circle_left_grid][circle_up_grid])
             next_move_grid[circle_left_grid][circle_up_grid].append(this)
+            if(old_len < 2):
+                if len(next_move_grid[circle_left_grid][circle_up_grid]) > 1:
+                    possible_collisions.append(next_move_grid[circle_left_grid][circle_up_grid])
         else:
-            next_move_grid[circle_right_grid][circle_up_grid].append(this)
-            next_move_grid[circle_right_grid][circle_down_grid].append(this)
+            old_len = len(next_move_grid[circle_left_grid][circle_up_grid])
             next_move_grid[circle_left_grid][circle_up_grid].append(this)
+            if(old_len < 2):
+                if len(next_move_grid[circle_left_grid][circle_up_grid]) > 1:
+                    possible_collisions.append(next_move_grid[circle_left_grid][circle_up_grid])
+            
+            old_len = len(next_move_grid[circle_right_grid][circle_up_grid])
+            next_move_grid[circle_right_grid][circle_up_grid].append(this)
+            if(old_len < 2):
+                if len(next_move_grid[circle_right_grid][circle_up_grid]) > 1:
+                    possible_collisions.append(next_move_grid[circle_right_grid][circle_up_grid])
+            old_len = len(next_move_grid[circle_right_grid][circle_down_grid])
+            next_move_grid[circle_right_grid][circle_down_grid].append(this)
+            if(old_len < 2):
+                if len(next_move_grid[circle_right_grid][circle_down_grid]) > 1:
+                    possible_collisions.append(next_move_grid[circle_right_grid][circle_down_grid])
+
+            old_len = len(next_move_grid[circle_left_grid][circle_down_grid])
             next_move_grid[circle_left_grid][circle_down_grid].append(this)
+            if(old_len < 2):
+                if len(next_move_grid[circle_left_grid][circle_down_grid]) > 1:
+                    possible_collisions.append(next_move_grid[circle_left_grid][circle_down_grid])
+            if len(possible_collisions) > 2:
+                print(len(possible_collisions))
         return
 
     def clear_grid(this):
+        possible_collisions.clear()
         circle_up_grid = int((this.y + 5) / rows)
         circle_down_grid = int((this.y - 5) / rows)
         circle_right_grid = int((this.x + 5) / rows)
@@ -183,7 +236,7 @@ def mainLoop():
     offset = 50
     boundary_virtual = (boundary[0] + offset, boundary[1] + offset, boundary[2] - offset + boundary[0], boundary[3] - offset + boundary[1])
     circles = []
-    nb_circles = 50
+    nb_circles = 100
     rn.seed(432)
     for i in range(nb_circles - 1):
         direction = rn.random() * 360
