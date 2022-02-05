@@ -2,6 +2,7 @@ import random as rn
 import math
 import pygame as pyg
 from pygame.locals import *
+import numpy as np
 
 FPS = 60
 WINDOWWIDTH = 800
@@ -23,10 +24,8 @@ GREEN = (0, 255, 0)
 
 class Circle:
     radius = 5
-    social_dist_radius = 10
-    v = 2
-    vx = 0
-    vy = 0
+    v_magnitude = 5
+    social_dist_radius = 15
 
     def __init__(this, x, y, direction, infected=False, thickness=0):
         this.x = x
@@ -34,32 +33,46 @@ class Circle:
         this.infected = infected
         this.thickness = thickness
         this.direction = direction
+        this.v = [math.cos(math.radians(direction)) * this.v_magnitude, math.sin(math.radians(direction)) * this.v_magnitude]
 
     def move(circles):
         for c in circles:
-            rn.seed(c.x)
             c.clear_grid()
-            c.direction += rn.normalvariate(0, 0.7) * 7
-            c.direction = c.direction % 360
-            c.vx = math.cos(math.radians(c.direction)) * c.v
-            c.vy = math.sin(math.radians(c.direction)) * c.v
-            c.x += c.vx
-            c.y += c.vy
+            # rn.seed(c.x)
+            # c.direction += rn.normalvariate(0, 0.7) * 7
+            # c.direction = c.direction % 360
+            # c.v[0] = math.cos(math.radians(c.direction)) * c.v_magnitude
+            # c.v[1] = math.sin(math.radians(c.direction)) * c.v_magnitude
+            v_norm = math.sqrt(c.v[0]**2 + c.v[1]**2)
+            if v_norm > c.v_magnitude:
+                c.v[0] *= c.v_magnitude / v_norm
+                c.v[1] *= c.v_magnitude / v_norm
+            c.x += c.v[0]
+            c.y += c.v[1]
             c.locate_grid()
-            surrounding_circles = c.get_surrounding_circles()
-            c.social_dist(surrounding_circles)
+            c.social_dist(c.get_surrounding_circles())
 
-    # Seems like it's the wrong approach
     def social_dist(this, surrounding_circles):
-        deflection_angle = 7
         for c in surrounding_circles:
             if this.dist_from_radius(c, this.social_dist_radius) < 0:
-                this.v -=1
-                # if this.y < c.y and this.x < c.x:
-                #     deflection_angle *= -1
-                # elif this.y > c.y and this.x > c.x:
-                #     deflection_angle *= 1
-                # this.direction += deflection_angle
+                n = [c.x - this.x, c.y - this.y] #normal vector
+                n_mag = math.sqrt(n[0]**2 + n[1]**2)
+                if(n_mag > 0):
+                    un = [n[0]/n_mag, n[1]/n_mag] #unit normal vector un = n/|n|
+                    ut= [-un[1], un[0]] #unit tangential vector which is ut={-uny, unx}
+                    #before collision
+                    v1n = np.dot(un, this.v)
+                    v1t = np.dot(ut, this.v)
+                    v2n = np.dot(un, c.v)
+                    v2t = np.dot(ut, c.v)
+                    #after collision
+                    v1ts = [v1t*ut[0], v1t* ut[1]]
+                    v1ns = [v2n*un[0], v2n* un[1]]
+                    v2ns = [v1n*un[0], v1n* un[1]]
+                    v2ts = [v2t*ut[0], v2t* ut[1]]
+
+                    this.v = [v1ts[0] + v1ns[0], v1ts[1] + v1ns[1]]
+                    c.v = [v2ns[0] + v2ts[0], v2ns[1] + v2ts[1]]
 
     def draw(circles, surface):
         for c in circles:
@@ -67,41 +80,17 @@ class Circle:
                 surface, RED if c.infected else BLUE, (c.x, c.y), c.radius, c.thickness
             )
 
-    def collision_boundary(circles, boundary, boundary_virtual):
+    def collision_boundary(circles, boundary):
+        reflection_strength = 0.5
         for c in circles:
-            reflection_angle = 10
-            if c.x - c.radius - 2 < boundary[0] or c.x + c.radius + 2 > boundary[2]:
-                c.direction = 180 - c.direction
-            elif c.y - c.radius - 2 < boundary[1] or c.y + c.radius + 2 > boundary[3]:
-                c.direction = 360 - c.direction
-            elif c.x < boundary_virtual[0] and not (
-                c.direction > 270 or c.direction < 90
-            ):
-                # reflection_angle = (
-                #     reflection_angle if c.direction > 180 else reflection_angle * -1
-                # )
-                c.direction += reflection_angle
-            elif c.x > boundary_virtual[2] and not (
-                c.direction > 90 and c.direction < 270
-            ):
-                # reflection_angle = (
-                #     reflection_angle if c.direction < 270 else reflection_angle * -1
-                # )
-                c.direction += reflection_angle
-            elif c.y < boundary_virtual[1] and not (
-                c.direction > 0 and c.direction < 180
-            ):
-                # reflection_angle = (
-                #     reflection_angle if c.direction > 270 else reflection_angle * -1
-                # )
-                c.direction += reflection_angle
-            elif c.y > boundary_virtual[3] and not (
-                c.direction > 180 and c.direction < 360
-            ):
-                # reflection_angle = (
-                #     reflection_angle if c.direction > 90 else reflection_angle * -1
-                # )
-                c.direction += reflection_angle
+            if c.x - c.radius < boundary[0]:
+                c.v[0] += reflection_strength
+            if c.x + c.radius > boundary[2]:
+                c.v[0] -= reflection_strength 
+            if c.y - c.radius < boundary[1]: 
+                c.v[1] += reflection_strength
+            if c.y + c.radius > boundary[3]:
+                c.v[1] -= reflection_strength
 
     def locate_grid(this):
         circle_up_grid = int((this.y + 5) / rows)
@@ -191,9 +180,10 @@ def main():
 
 def mainLoop():
     boundary = (50, 50, 700, 700)
-    boundary_virtual = (100, 100, 685, 685)
+    offset = 50
+    boundary_virtual = (boundary[0] + offset, boundary[1] + offset, boundary[2] - offset + boundary[0], boundary[3] - offset + boundary[1])
     circles = []
-    nb_circles = 150
+    nb_circles = 50
     rn.seed(432)
     for i in range(nb_circles - 1):
         direction = rn.random() * 360
@@ -223,7 +213,7 @@ def mainLoop():
                 running = False
 
         Circle.move(circles)
-        Circle.collision_boundary(circles, boundary, boundary_virtual)
+        Circle.collision_boundary(circles, boundary_virtual)
         new_infected_circles = Circle.infect_circles(infected_circles)
         infected_circles = infected_circles + new_infected_circles
         DISPLAYSURF.fill(BLACK)
