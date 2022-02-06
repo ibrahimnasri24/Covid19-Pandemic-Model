@@ -10,7 +10,8 @@ WINDOWWIDTH = 800
 WINDOWHEIGHT = 800
 
 infection_radius = 10
-rows, cols = (int(WINDOWWIDTH / infection_radius), int(WINDOWHEIGHT / infection_radius))
+social_dist_radius = 15
+rows, cols = (int(WINDOWWIDTH / social_dist_radius), int(WINDOWHEIGHT / social_dist_radius))
 next_move_grid = [[[] for j in range(rows)] for i in range(cols)]
 
 possible_collisions = []
@@ -28,7 +29,6 @@ GREEN = (0, 255, 0)
 class Circle:
     radius = 5
     v_magnitude = 5
-    social_dist_radius = 15
 
     def __init__(this, x, y, direction, infected=False, thickness=0):
         this.x = x
@@ -57,32 +57,46 @@ class Circle:
 
     def social_dist():
         nb_possible_collisions = len(possible_collisions)
+        # print(nb_possible_collisions)
         i = 0
         while(i < nb_possible_collisions):
-            circles = possible_collisions[i]
+            indices = possible_collisions[i]
+            # print(indices)
+            l = int(indices[0])
+            m = int(indices[1])
+            circles = next_move_grid[l][m]
             c1 = circles[0]
-            n = len(circles)
+            n = circles.__len__()
+            j=0
             for c2 in circles:
-                if c1.dist_from_radius(c2, c1.social_dist_radius) < 0:
-                    n = [c2.x - c1.x, c2.y - c1.y] #normal vector
-                    n_mag = math.sqrt(n[0]**2 + n[1]**2)
-                    if(n_mag > 0):
-                        un = [n[0]/n_mag, n[1]/n_mag] #unit normal vector un = n/|n|
-                        ut= [-un[1], un[0]] #unit tangential vector which is ut={-uny, unx}
-                        #before collision
-                        v1n = np.dot(un, c1.v)
-                        v1t = np.dot(ut, c1.v)
-                        v2n = np.dot(un, c2.v)
-                        v2t = np.dot(ut, c2.v)
-                        #after collision
-                        v1ts = [v1t*ut[0], v1t* ut[1]]
-                        v1ns = [v2n*un[0], v2n* un[1]]
-                        v2ns = [v1n*un[0], v1n* un[1]]
-                        v2ts = [v2t*ut[0], v2t* ut[1]]
+                if j > i:
+                    if c1.infected:
+                        print("infected")
+                        if c1.dist_from_radius(c2, infection_radius) < 0:
+                            print("infected")
+                            c2.infected = True
+                    if c1.dist_from_radius(c2, social_dist_radius) < 0:
+                        n = [c2.x - c1.x, c2.y - c1.y] #normal vector
+                        n_mag = math.sqrt(n[0]**2 + n[1]**2)
+                        if(n_mag > 0):
+                            # print("sc")
+                            un = [n[0]/n_mag, n[1]/n_mag] #unit normal vector un = n/|n|
+                            ut= [-un[1], un[0]] #unit tangential vector which is ut={-uny, unx}
+                            #before collision
+                            v1n = np.dot(un, c1.v)
+                            v1t = np.dot(ut, c1.v)
+                            v2n = np.dot(un, c2.v)
+                            v2t = np.dot(ut, c2.v)
+                            #after collision
+                            v1ts = [v1t*ut[0], v1t* ut[1]]
+                            v1ns = [v2n*un[0], v2n* un[1]]
+                            v2ns = [v1n*un[0], v1n* un[1]]
+                            v2ts = [v2t*ut[0], v2t* ut[1]]
 
-                        c1.v = [v1ts[0] + v1ns[0], v1ts[1] + v1ns[1]]
-                        c2.v = [v2ns[0] + v2ts[0], v2ns[1] + v2ts[1]]
-        i += 1
+                            c1.v = [v1ts[0] + v1ns[0], v1ts[1] + v1ns[1]]
+                            c2.v = [v2ns[0] + v2ts[0], v2ns[1] + v2ts[1]]
+                j += 1
+            i += 1
 
     def draw(circles, surface):
         for c in circles:
@@ -103,73 +117,73 @@ class Circle:
                 c.v[1] -= reflection_strength
 
     def locate_grid(this):
-        circle_up_grid = int((this.y + 5) / rows)
-        circle_down_grid = int((this.y - 5) / rows)
-        circle_right_grid = int((this.x + 5) / rows)
-        circle_left_grid = int((this.x - 5) / rows)
+        circle_up_grid = int((this.y + social_dist_radius) / rows)
+        circle_down_grid = int((this.y - social_dist_radius) / rows)
+        circle_right_grid = int((this.x + social_dist_radius) / rows)
+        circle_left_grid = int((this.x - social_dist_radius) / rows)
         if circle_up_grid == circle_down_grid and circle_right_grid == circle_left_grid:
             old_len = len(next_move_grid[circle_right_grid][circle_up_grid])
             next_move_grid[circle_right_grid][circle_up_grid].append(this)
             if(old_len < 2):
                 if len(next_move_grid[circle_right_grid][circle_up_grid]) > 1:
-                    possible_collisions.append(next_move_grid[circle_right_grid][circle_up_grid])
+                    possible_collisions.append([circle_right_grid, circle_up_grid])
         elif circle_right_grid == circle_left_grid:
             old_len = len(next_move_grid[circle_right_grid][circle_up_grid])
             next_move_grid[circle_right_grid][circle_up_grid].append(this)
             if(old_len < 2):
                 if len(next_move_grid[circle_right_grid][circle_up_grid]) > 1:
-                    possible_collisions.append(next_move_grid[circle_right_grid][circle_up_grid])
+                    possible_collisions.append([circle_right_grid, circle_up_grid])
             
             old_len = len(next_move_grid[circle_right_grid][circle_down_grid])
             next_move_grid[circle_right_grid][circle_down_grid].append(this)
             if(old_len < 2):
                 if len(next_move_grid[circle_right_grid][circle_down_grid]) > 1:
-                    possible_collisions.append(next_move_grid[circle_right_grid][circle_down_grid])
+                    possible_collisions.append([circle_right_grid, circle_down_grid])
         elif circle_up_grid == circle_down_grid:
             old_len = len(next_move_grid[circle_right_grid][circle_up_grid])
             next_move_grid[circle_right_grid][circle_up_grid].append(this)
             if(old_len < 2):
                 if len(next_move_grid[circle_right_grid][circle_up_grid]) > 1:
-                    possible_collisions.append(next_move_grid[circle_right_grid][circle_up_grid])
+                    possible_collisions.append([circle_right_grid, circle_up_grid])
             
             old_len = len(next_move_grid[circle_left_grid][circle_up_grid])
             next_move_grid[circle_left_grid][circle_up_grid].append(this)
             if(old_len < 2):
                 if len(next_move_grid[circle_left_grid][circle_up_grid]) > 1:
-                    possible_collisions.append(next_move_grid[circle_left_grid][circle_up_grid])
+                    possible_collisions.append([circle_left_grid, circle_up_grid])
         else:
             old_len = len(next_move_grid[circle_left_grid][circle_up_grid])
             next_move_grid[circle_left_grid][circle_up_grid].append(this)
             if(old_len < 2):
                 if len(next_move_grid[circle_left_grid][circle_up_grid]) > 1:
-                    possible_collisions.append(next_move_grid[circle_left_grid][circle_up_grid])
+                    possible_collisions.append([circle_left_grid, circle_up_grid])
             
             old_len = len(next_move_grid[circle_right_grid][circle_up_grid])
             next_move_grid[circle_right_grid][circle_up_grid].append(this)
             if(old_len < 2):
                 if len(next_move_grid[circle_right_grid][circle_up_grid]) > 1:
-                    possible_collisions.append(next_move_grid[circle_right_grid][circle_up_grid])
+                    possible_collisions.append([circle_right_grid, circle_up_grid])
             old_len = len(next_move_grid[circle_right_grid][circle_down_grid])
             next_move_grid[circle_right_grid][circle_down_grid].append(this)
             if(old_len < 2):
                 if len(next_move_grid[circle_right_grid][circle_down_grid]) > 1:
-                    possible_collisions.append(next_move_grid[circle_right_grid][circle_down_grid])
+                    possible_collisions.append([circle_right_grid, circle_down_grid])
 
             old_len = len(next_move_grid[circle_left_grid][circle_down_grid])
             next_move_grid[circle_left_grid][circle_down_grid].append(this)
             if(old_len < 2):
                 if len(next_move_grid[circle_left_grid][circle_down_grid]) > 1:
-                    possible_collisions.append(next_move_grid[circle_left_grid][circle_down_grid])
-            if len(possible_collisions) > 2:
-                print(len(possible_collisions))
+                    possible_collisions.append([circle_left_grid, circle_down_grid])
+            # if len(possible_collisions) > 2:
+                # print(len(possible_collisions))
         return
 
     def clear_grid(this):
         possible_collisions.clear()
-        circle_up_grid = int((this.y + 5) / rows)
-        circle_down_grid = int((this.y - 5) / rows)
-        circle_right_grid = int((this.x + 5) / rows)
-        circle_left_grid = int((this.x - 5) / rows)
+        circle_up_grid = int((this.y + social_dist_radius) / rows)
+        circle_down_grid = int((this.y - social_dist_radius) / rows)
+        circle_right_grid = int((this.x + social_dist_radius) / rows)
+        circle_left_grid = int((this.x - social_dist_radius) / rows)
         if circle_up_grid == circle_down_grid and circle_right_grid == circle_left_grid:
             next_move_grid[circle_right_grid][circle_up_grid].remove(this)
         elif circle_right_grid == circle_left_grid:
@@ -236,7 +250,7 @@ def mainLoop():
     offset = 50
     boundary_virtual = (boundary[0] + offset, boundary[1] + offset, boundary[2] - offset + boundary[0], boundary[3] - offset + boundary[1])
     circles = []
-    nb_circles = 100
+    nb_circles = 50
     rn.seed(432)
     for i in range(nb_circles - 1):
         direction = rn.random() * 360
@@ -267,8 +281,8 @@ def mainLoop():
 
         Circle.move(circles)
         Circle.collision_boundary(circles, boundary_virtual)
-        new_infected_circles = Circle.infect_circles(infected_circles)
-        infected_circles = infected_circles + new_infected_circles
+        # new_infected_circles = Circle.infect_circles(infected_circles)
+        # infected_circles = infected_circles + new_infected_circles
         DISPLAYSURF.fill(BLACK)
 
         pyg.draw.rect(DISPLAYSURF, WHITE, boundary, 2)
