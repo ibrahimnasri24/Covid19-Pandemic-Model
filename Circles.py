@@ -15,12 +15,13 @@ GREY = (30, 30, 30)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 
-infection_radius = 4
-social_distance_radius = 8
+infection_radius = 7
+social_distance_radius = 13
+percentage_of_population_social_distancing = 0.7
 
 boundary = (50, 50, 700, 700)
 
-grid_size= 3 * social_distance_radius
+grid_size= 2 * social_distance_radius + 4
 
 cols = int(WINDOWWIDTH / grid_size)
 rows = int(WINDOWHEIGHT / grid_size)
@@ -34,9 +35,11 @@ class Circle:
     radius = 5
     v_magnitude = 2
 
-    def __init__(this, x, y, direction, infected=False, thickness=0):
+    def __init__(this, x, y, direction, id, social_distancing, infected=False, thickness=0):
         this.x = x
         this.y = y
+        this.id = id
+        this.social_distancing = social_distancing
         this.infected = infected
         this.thickness = thickness
         this.direction = direction
@@ -88,59 +91,8 @@ class Circle:
                 c.v[1] += reflection_strength
             if c.y + c.radius > boundary[3] + boundary[1] - offset:
                 c.v[1] -= reflection_strength
-                
-    def collision(circles, nbcircles):
-        i=0
-        while(i < nbcircles):
-            j=i+1
-            while(j < nbcircles):
-                c1 = circles[i]
-                c2 = circles[j]
-                
-                if(((c1.x - c2.x) ** 2 + (c1.y - c2.y) ** 2) < (2 * (infection_radius)) ** 2):
-                    if c1.infected:
-                        c2.infected = True
-                    elif c2.infected:
-                        c1.infected = True
 
-                if(((c1.x - c2.x) ** 2 + (c1.y - c2.y) ** 2) < (2 * (social_distance_radius)) ** 2) and i not in c2.circles_indexes_in_collision and j not in c1.circles_indexes_in_collision:
-                    n = [c2.x - c1.x, c2.y - c1.y] #normal vector
-                    n_mag = math.sqrt(n[0]**2 + n[1]**2)
-                    if(n_mag == 0):
-                        break
-                    un = [n[0]/n_mag, n[1]/n_mag] #unit normal vector un = n/|n|
-                    ut= [-un[1], un[0]] #unit tangential vector which is ut={-uny, unx}
-                    
-                    #before collision
-                    v1n = np.dot(un, c1.v)
-                    v1t = np.dot(ut, c1.v)
-                    v2n = np.dot(un, c2.v)
-                    v2t = np.dot(ut, c2.v)
-                    #after collision
-                    v1ts = [v1t*ut[0], v1t* ut[1]]
-                    v1ns = [v2n*un[0], v2n* un[1]]
-                    v2ns = [v1n*un[0], v1n* un[1]]
-                    v2ts = [v2t*ut[0], v2t* ut[1]]
-
-                    c1.v = [v1ts[0] + v1ns[0], v1ts[1] + v1ns[1]]
-                    c2.v = [v2ns[0] + v2ts[0], v2ns[1] + v2ts[1]]
-
-                    over_collision = ((2 * social_distance_radius) - n_mag)/2
-                    budge_x = n[0]  * (over_collision/n_mag)
-                    budge_y = n[1]  * (over_collision/n_mag)
-
-                    c1.budge_x = -budge_x
-                    c1.budge_y = -budge_y
-
-                    c2.budge_x = budge_x
-                    c2.budge_y = budge_y
-
-                    c1.circles_indexes_in_collision.append(j)
-                    c2.circles_indexes_in_collision.append(i)
-                j += 1
-            i += 1
-
-    def collision2():
+    def collision():
         for cell_ind in possible_collisions:
             pos_col_arr = grid[cell_ind[0]][cell_ind[1]]
             n = len(pos_col_arr)
@@ -153,7 +105,17 @@ class Circle:
                             c2.infected = True
                         elif c2.infected:
                             c1.infected = True
-                    if(((c1.x - c2.x) ** 2 + (c1.y - c2.y) ** 2) < (2 * (social_distance_radius)) ** 2):
+
+                    already_collided_in_this_frame = (c2.id in c1.circles_indexes_in_collision) or (c1.id in c2.circles_indexes_in_collision)
+                    both_of_them_not_social_distancing = not c1.social_distancing and not c2.social_distancing
+
+                    if(((c1.x - c2.x) ** 2 + (c1.y - c2.y) ** 2) < (2 * (social_distance_radius)) ** 2 and not already_collided_in_this_frame and not both_of_them_not_social_distancing):
+                        # if(rn.random() < 0.8):
+                        #     break
+
+                        c1.circles_indexes_in_collision.append(c2.id)
+                        c2.circles_indexes_in_collision.append(c1.id)
+
                         n = [c2.x - c1.x, c2.y - c1.y] #normal vector
                         n_mag = math.sqrt(n[0]**2 + n[1]**2)
                         if(n_mag == 0):
@@ -279,21 +241,29 @@ def mainLoop():
     time = 0
     frame = 0
     circles = []
-    nb_circles = 150
+    population = 100
     rn.seed(2343)
-    for i in range(nb_circles):
+    social_distancing = True
+    for i in range(population):
+        if i > 0.7 * population:
+            social_distancing = False
         circle = Circle(
             rn.random() * (boundary[2] - 150) + 120,
             rn.random() * (boundary[3] - 150) + 120,
-            rn.random()*360)
+            rn.random()*360,
+            i,
+            social_distancing)
         circles.append(circle)
 
-    nb_circles+=1
     circle = Circle(
         rn.random() * (boundary[2] - 150) + 120,
         rn.random() * (boundary[3] - 150) + 120,
-        rn.random()*360,True)
+        rn.random()*360,
+        population,
+        False,
+        True)
     circles.append(circle)
+    population+=1
 
     running = True
     while running:
@@ -309,9 +279,8 @@ def mainLoop():
         #drawGrid()
 
         Circle.move(circles)
-        Circle.collision2()
+        Circle.collision()
         Circle.collision_boundary(circles, boundary)
-        # Circle.collision(circles, nb_circles)
 
         pyg.display.update()
         FPSCLOCK.tick(FPS)
