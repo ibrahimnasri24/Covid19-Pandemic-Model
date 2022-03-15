@@ -15,8 +15,8 @@ GREY = (30, 30, 30)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 
-infection_radius = 7
-social_distance_radius = 13
+infection_radius = 5
+social_distance_radius = 8
 percentage_of_population_social_distancing = 0.7
 
 boundary = (50, 50, 700, 700)
@@ -28,6 +28,12 @@ rows = int(WINDOWHEIGHT / grid_size)
 grid = [[[] for j in range(rows)] for i in range(cols)]
 
 possible_collisions = []
+
+circles = []
+
+time = 0
+frame = 0
+
 
 class Circle:
     radius = 5
@@ -220,26 +226,22 @@ class Circle:
 def distance(x1, y1, x2, y2):
     return math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
 
-def main():
-    global FPSCLOCK, DISPLAYSURF
-    pyg.init()
-    FPSCLOCK = pyg.time.Clock()
-    DISPLAYSURF = pyg.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
-    pyg.display.set_caption("Test")
-
-    mainLoop()
-
 def drawGrid():
     for i in range(cols):
         pyg.draw.line(DISPLAYSURF, GREY, (i*grid_size, 0), (i*grid_size, 800))
     for i in range(rows):
         pyg.draw.line(DISPLAYSURF, GREY, (0, i*grid_size), (800, i*grid_size))
 
-def mainLoop():
+def initialize(population):
+    circles.clear()
     time = 0
     frame = 0
-    circles = []
-    population = 100
+    global FPSCLOCK, DISPLAYSURF
+    pyg.init()
+    FPSCLOCK = pyg.time.Clock()
+    DISPLAYSURF = pyg.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
+    pyg.display.set_caption("Test")
+
     rn.seed(2343)
     social_distancing = True
     for i in range(population):
@@ -263,30 +265,31 @@ def mainLoop():
     circles.append(circle)
     population+=1
 
-    running = True
-    while running:
-        for event in pyg.event.get():
-            if event.type == pyg.QUIT:
-                running = False
+def population_loop():
+    for event in pyg.event.get():
+        if event.type == pyg.QUIT:
+            pyg.quit()
+            return False
 
+    DISPLAYSURF.fill(BLACK)
 
-        DISPLAYSURF.fill(BLACK)
+    pyg.draw.rect(DISPLAYSURF, WHITE, boundary, 2)
+    Circle.draw(circles, DISPLAYSURF)
+    #drawGrid()
 
-        pyg.draw.rect(DISPLAYSURF, WHITE, boundary, 2)
-        Circle.draw(circles, DISPLAYSURF)
-        #drawGrid()
+    Circle.move(circles)
+    Circle.collision()
+    Circle.collision_boundary(circles, boundary)
 
-        Circle.move(circles)
-        Circle.collision()
-        Circle.collision_boundary(circles, boundary)
+    pyg.display.update()
+    FPSCLOCK.tick(FPS)
+    # frame += 1
+    # if frame % FPS == 0:
+    #     time += 1
+        #print(time)
+    
+    return True
 
-        pyg.display.update()
-        FPSCLOCK.tick(FPS)
-        frame += 1
-        if frame % FPS == 0:
-            time += 1
-            #print(time)
-
-    pyg.quit()
-
-main()
+# initialize()
+# while(True):
+#     population_loop()
