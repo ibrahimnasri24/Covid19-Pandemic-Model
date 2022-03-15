@@ -20,7 +20,9 @@ class Population_Window:
 
     def open_population_window(this):
         if not this.start:
-            Population.initialize(300)
+            Population.Circle.v_magnitude = 1.5
+            Population.percentage_of_population_social_distancing = 0.5
+            Population.initialize(150)
         this.start = True
 
 # def sub_p():
@@ -31,7 +33,8 @@ class Population_Window:
 #     os.execlp(args)
 
 root = tk.Tk()
-root.geometry('400x400')
+root.title("Covid 19 Model")
+root.geometry('1080x720')
 pwin = Population_Window(root)
 running = True
 

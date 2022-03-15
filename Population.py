@@ -3,6 +3,7 @@ import math
 import pygame as pyg
 from pygame.locals import *
 import numpy as np
+import time as t
 
 FPS = 60
 WINDOWWIDTH = 800
@@ -61,7 +62,7 @@ class Circle:
         for c in circles:
             c.grid_cells.clear()
             c.circles_indexes_in_collision.clear()
-            rn.seed(c.x)
+            #rn.seed(c.x)
             wander_step = rn.normalvariate(0, 0.2) * Circle.v_magnitude * 0.55
             if rn.random() > 0.5:
                 c.v[0] += wander_step
@@ -242,10 +243,10 @@ def initialize(population):
     DISPLAYSURF = pyg.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
     pyg.display.set_caption("Test")
 
-    rn.seed(2343)
+    rn.seed(t.time())
     social_distancing = True
     for i in range(population):
-        if i > 0.7 * population:
+        if i > percentage_of_population_social_distancing * population:
             social_distancing = False
         circle = Circle(
             rn.random() * (boundary[2] - 150) + 120,
@@ -283,12 +284,15 @@ def population_loop():
 
     pyg.display.update()
     FPSCLOCK.tick(FPS)
-    # frame += 1
-    # if frame % FPS == 0:
-    #     time += 1
-        #print(time)
     
     return True
+
+def stop():
+    print("stopping1")
+    pyg.quit()
+    print("stopping2")
+    return False
+    print("stopping3")
 
 # initialize()
 # while(True):
