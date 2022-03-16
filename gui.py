@@ -18,6 +18,8 @@ class Population_Window:
     def open_population_window(this):
         if not this.start:
             this.anim_w = P.AnimationWindow()
+            P.AnimationWindow.population = 200
+            P.AnimationWindow.percentage_of_population_social_distancing = 0.5
             this.anim_w.initialize()
         this.start = True
 

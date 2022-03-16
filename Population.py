@@ -20,8 +20,8 @@ class AnimationWindow:
     window_height = 800
 
     population = 100
-    infection_radius = 5
-    social_distance_radius = 8
+    infection_radius = 8
+    social_distance_radius = 10
     percentage_of_population_social_distancing = 0.7
 
     def __init__(
@@ -58,14 +58,16 @@ class AnimationWindow:
                 social_distancing,
             )
 
-        Circle(
+        infected = Circle(
             rn.random() * (this.boundary[2] - 150) + 120,
             rn.random() * (this.boundary[3] - 150) + 120,
             rn.random() * 360,
-            AnimationWindow.population,
+            AnimationWindow.population - 1,
             False,
             True,
         )
+
+        InfectionCircle(infected.id)
 
         Circle.grid = [[[] for j in range(Circle.rows)] for i in range(Circle.cols)]
 
@@ -79,6 +81,7 @@ class AnimationWindow:
 
         pyg.draw.rect(DISPLAYSURF, WHITE, this.boundary, 2)
         Circle.draw(Circle.circles, DISPLAYSURF)
+        InfectionCircle.draw(DISPLAYSURF)
         # drawGrid()
 
         Circle.move(Circle.circles)
@@ -90,14 +93,9 @@ class AnimationWindow:
 
         return True
 
-
-class InfectionCircle:
-    pass
-
-
 class Circle:
     radius = 5
-    v_magnitude = 2
+    v_magnitude = 1.2
 
     grid_size = 2 * AnimationWindow.social_distance_radius + 4
 
@@ -155,6 +153,10 @@ class Circle:
             c.budge_y = 0
 
             c.locate_circle_in_grid(Circle.grid)
+
+            if c.infected:
+                pass
+
         Circle.get_possible_collisions()
 
     def draw(circles, surface):
@@ -188,9 +190,13 @@ class Circle:
                         2 * (AnimationWindow.infection_radius)
                     ) ** 2:
                         if c1.infected:
-                            c2.infected = True
+                            if not c2.infected:
+                                InfectionCircle(c2.id) 
+                                c2.infected = True
                         elif c2.infected:
-                            c1.infected = True
+                            if not c1.infected:
+                                InfectionCircle(c1.id)
+                                c1.infected = True
 
                     already_collided_in_this_frame = (
                         c2.id in c1.circles_indexes_in_collision
@@ -364,6 +370,34 @@ class Circle:
                 if leng > 1:
                     Circle.possible_collisions.append((i, j))
 
+class InfectionCircle:
+    infected_circles = []
+    end_frame = 60
+    infection_circle_radius = 17
+    # frame_step = (AnimationWindow.infection_radius - Circle.radius) / AnimationWindow.FPS
+    radius_step = (infection_circle_radius - Circle.radius) / AnimationWindow.FPS
+    color_step = int((255 - 0) / AnimationWindow.FPS)
+
+    def __init__(this, id):
+        this.id = id
+        this.radius = Circle.radius
+        this.alpha = 255
+        this.surface = pyg.Surface((InfectionCircle.infection_circle_radius*2,InfectionCircle.infection_circle_radius*2), pyg.SRCALPHA)
+        this.frame = 0
+        InfectionCircle.infected_circles.append(this)
+
+    def draw(main_surface):
+        for infected in InfectionCircle.infected_circles:
+            c = Circle.circles[infected.id]
+            infected.alpha -= InfectionCircle.color_step
+            pyg.draw.circle(
+                infected.surface, (*RED, infected.alpha), (InfectionCircle.infection_circle_radius, InfectionCircle.infection_circle_radius), infected.radius + (InfectionCircle.radius_step * infected.frame), 5
+            )
+            main_surface.blit(infected.surface, (c.x - InfectionCircle.infection_circle_radius, c.y - InfectionCircle.infection_circle_radius))
+            infected.frame += 1
+            if(infected.frame > InfectionCircle.end_frame):
+                infected.frame = 0
+                infected.alpha = 255
 
 def distance(x1, y1, x2, y2):
     return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
@@ -380,12 +414,9 @@ def drawGrid():
         )
 
 
-def stop():
-    print("stopping1")
-    pyg.quit()
-    print("stopping2")
-    return False
-    print("stopping3")
+# def stop():
+#     pyg.quit()
+#     return False
 
 
 # initialize()
