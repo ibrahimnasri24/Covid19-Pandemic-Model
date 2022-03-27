@@ -1,5 +1,6 @@
 import random as rn
 import math
+from unittest import result
 import pygame as pyg
 from pygame.locals import *
 import numpy as np
@@ -14,22 +15,23 @@ GREEN = (0, 255, 0)
 
 
 class AnimationWindow:
+    frame = 0
+    running= True
 
     FPS = 60
     window_width = 800
     window_height = 800
 
-    population = 100
+    population = 200
     infection_radius = 8
     social_distance_radius = 10
-    percentage_of_population_social_distancing = 0.7
+    percentage_of_population_social_distancing = 0.5
 
     def __init__(
         this,
         boundary=(50, 50, 700, 700),
     ):
         this.boundary = boundary
-        # this.Infection_Circles = np.array(population)
 
     def initialize(this):
         Circle.circles.clear()
@@ -90,6 +92,8 @@ class AnimationWindow:
 
         pyg.display.update()
         FPSCLOCK.tick(AnimationWindow.FPS)
+
+        AnimationWindow.frame+=1
 
         return True
 
@@ -413,12 +417,11 @@ def drawGrid():
             DISPLAYSURF, GREY, (0, i * Circle.grid_size), (800, i * Circle.grid_size)
         )
 
-
-# def stop():
-#     pyg.quit()
-#     return False
-
-
-# initialize()
-# while(True):
-#     population_loop()
+def main(t, result):
+    anim_w = AnimationWindow()
+    anim_w.initialize()
+    while(AnimationWindow.running):
+        AnimationWindow.running = anim_w.main_loop(Circle)
+        # print("main: ",result)
+        result[0] = AnimationWindow.frame
+        result[1] = len(InfectionCircle.infected_circles) / AnimationWindow.population * 100

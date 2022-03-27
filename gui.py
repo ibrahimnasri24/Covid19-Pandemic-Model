@@ -1,61 +1,40 @@
-from asyncio import subprocess
-from pickle import TRUE
-import Population as P
-
+import multiprocessing
 import tkinter as tk
-from tkinter import font
-import os
-import subprocess
-import shlex
-from itertools import cycle
+from tkinter import *
 
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-class Population_Window:
-
-    def __init__(self):
-        self.start = False
-
-    def open_population_window(this):
-        if not this.start:
-            this.anim_w = P.AnimationWindow()
-            P.AnimationWindow.population = 200
-            P.AnimationWindow.percentage_of_population_social_distancing = 0.5
-            this.anim_w.initialize()
-        this.start = True
-
-# def sub_p():
-#     com = "python " + "Circles.py"
-#     args = shlex.split(com)
-#     print(args)
-#     #p = subprocess.run(args)
-#     os.execlp(args)
+import animation_window
+import graph
 
 root = tk.Tk()
-root.title("Covid 19 Model")
-root.geometry("1080x720")
+root.wm_title("Covid19 Model")
+content = tk.Frame(root)
 
-pwin = Population_Window()
+canvas = FigureCanvasTkAgg(graph.Graph.fig, master=content)
+button_quit = tk.Button(master=content, text="Quit", command=root.quit)
 
-helv = font.Font(family="Helvetica", size=18, weight="bold")
-button = tk.Button(
-    root, text="Start", font=helv, command=pwin.open_population_window
-).pack(side=tk.LEFT)
+nb_col = 10
+nb_row = 7
 
-running = True
+content.grid(column=0, row=0, sticky=(N, S, E, W))
+canvas.get_tk_widget().grid(column=0, row=0, columnspan=5, rowspan=7, sticky=(N, S, E, W), pady=5, padx=5)
+button_quit.grid(column=7, row=0, pady=5, padx=5)
 
+root.columnconfigure(0, weight=1)
+root.rowconfigure(0, weight=1)
 
-def on_closing():
-    running = False
-    root.destroy()
+for i in range(5):
+    content.columnconfigure(i, weight=1)
+for i in range(5,10):
+    content.columnconfigure(i, weight=2)
+for i in range(nb_row):
+    content.rowconfigure(i, weight=1)
 
-
-while running:
-    root.update()
-
-    if pwin.start:
-        pwin.start = pwin.anim_w.main_loop(P.Circle)
-
-    try:
-        root.protocol("WM_DELETE_WINDOW", on_closing)
-    except:
-        running = False
+if __name__ == '__main__':
+    result = multiprocessing.Array('d', 2)
+    p2 = multiprocessing.Process(target=animation_window.main, args=(True, result))
+    p2.start()
+    graph.Graph.mainfunc(result, canvas)
+    print("end")
+    tk.mainloop()

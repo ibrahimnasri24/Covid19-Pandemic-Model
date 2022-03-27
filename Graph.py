@@ -1,35 +1,24 @@
-import numpy as np
 from matplotlib import pyplot as plt
-from matplotlib.animation import FuncAnimation
-plt.style.use('seaborn-pastel')
+from matplotlib import animation
 
+class Graph:
+    def frames(result):
+        # while True:
+        yield result
 
-fig = plt.figure()
-ax = plt.axes(xlim=(0, 4), ylim=(-2, 2))
-line, = ax.plot([], [], "r-")
+    fig = plt.figure()
+    ax = plt.gca()
+    ax.set_ylim(0,100)
 
+    x = []
+    y = []
 
-x=[]
-y=[]
-def init():
-    line.set_data([], [])
-    return line,
-def animate(i):
-    x.append(i)
-    # y.append(np.sin(2 * np.pi * (i- 0.01 * i)))
-    if i <2 :
-        aux=0
-    if i < 20:
-        y.append(2**i)
-        ax.set_ylim(0, 2**i + 10)
-        aux = y[i-1]
-    else:
-        y.append(aux * 2**-i)
-        print(aux)
+    def animate(res):
+        Graph.x.append(res[0])
+        Graph.y.append(res[1])
+        Graph.ax.set_xlim(0, res[0])
+        return plt.plot(Graph.x, Graph.y, 'r-')
 
-    line.set_data(x, y)
-    ax.set_xlim(0, i)
-    return line,
-
-anim = FuncAnimation(fig, animate, init_func=init, frames=100, interval = 100)
-plt.show()
+    def mainfunc(result, canvas):
+        anim = animation.FuncAnimation(Graph.fig, Graph.animate, frames=Graph.frames(result), interval=100)
+        canvas.draw()
