@@ -1,6 +1,5 @@
 import random as rn
 import math
-from unittest import result
 import pygame as pyg
 from pygame.locals import *
 import numpy as np

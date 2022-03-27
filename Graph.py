@@ -16,7 +16,11 @@ class Graph:
     def animate(res):
         Graph.x.append(res[0])
         Graph.y.append(res[1])
-        Graph.ax.set_xlim(0, res[0])
+        if res[0] != 0:
+            Graph.ax.set_xlim(0, res[0])
+        else:
+            Graph.ax.set_xlim(0, 1)
+
         return plt.plot(Graph.x, Graph.y, 'r-')
 
     def mainfunc(result, canvas):

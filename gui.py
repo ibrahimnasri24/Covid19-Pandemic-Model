@@ -7,7 +7,13 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import animation_window
 import graph
 
+def quit():
+    root.quit()
+    root.destroy()
+
 root = tk.Tk()
+root.protocol("WM_DELETE_WINDOW", quit)
+root.geometry("1080x720+100+100")
 root.wm_title("Covid19 Model")
 content = tk.Frame(root)
 
@@ -36,5 +42,5 @@ if __name__ == '__main__':
     p2 = multiprocessing.Process(target=animation_window.main, args=(True, result))
     p2.start()
     graph.Graph.mainfunc(result, canvas)
-    print("end")
     tk.mainloop()
+    p2.terminate()
