@@ -18,14 +18,14 @@ root.wm_title("Covid19 Model")
 content = tk.Frame(root)
 
 canvas = FigureCanvasTkAgg(graph.Graph.fig, master=content)
-button_quit = tk.Button(master=content, text="Quit", command=root.quit)
+# button_quit = tk.Button(master=content, text="Quit", command=root.quit)
 
 nb_col = 10
 nb_row = 7
 
 content.grid(column=0, row=0, sticky=(N, S, E, W))
 canvas.get_tk_widget().grid(column=0, row=0, columnspan=5, rowspan=7, sticky=(N, S, E, W), pady=5, padx=5)
-button_quit.grid(column=7, row=0, pady=5, padx=5)
+# button_quit.grid(column=7, row=0, pady=5, padx=5)
 
 root.columnconfigure(0, weight=1)
 root.rowconfigure(0, weight=1)
