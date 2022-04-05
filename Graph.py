@@ -2,36 +2,39 @@ from matplotlib import pyplot as plt
 from matplotlib import animation
 
 class Graph:
+    def  __init__(self) -> None:
+        self.fig = plt.figure()
+        self.ax = plt.gca()
+        self.ax.set_ylim(0,100)
 
-    fig = plt.figure()
-    ax = plt.gca()
-    ax.set_ylim(0,100)
+        self.x = []
+        self.y = []
 
-    x = []
-    y = []
+    def reset(self):
+        self.x.clear()
+        self.y.clear()
+        plt.clf()
+        self.ax = plt.gca()
+        self.ax.set_ylim(0,100)
 
-    def reset():
-        Graph.x = []
-        Graph.y = []
-
-    def frames(result):
+    def frames(self, result):
         yield result
 
-    def animate(res):
-        Graph.x.append(res[0])
-        Graph.y.append(res[1])
+    def animate(self, res):
+        self.x.append(res[0])
+        self.y.append(res[1])
 
         if res[0] != 0:
-            Graph.ax.set_xlim(0, res[0])
+            self.ax.set_xlim(0, res[0])
         else:
-            Graph.ax.set_xlim(0, 1)
+            self.ax.set_xlim(0, 1)
 
-        # print(Graph.x)
-        # print(Graph.y)
+        # print(self.x)
+        # print(self.y)
 
-        return plt.plot(Graph.x, Graph.y, 'r-')
+        return plt.plot(self.x, self.y, 'r-')
 
-    def mainfunc(result, canvas):
+    def mainfunc(self, result, canvas):
         print("updating graph")
-        anim = animation.FuncAnimation(Graph.fig, Graph.animate, frames=Graph.frames(result), interval=100)
+        anim = animation.FuncAnimation(self.fig, self.animate, frames=self.frames(result), interval=100)
         canvas.draw()

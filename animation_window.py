@@ -4,6 +4,7 @@ import pygame as pyg
 from pygame.locals import *
 import numpy as np
 import time as t
+import os
 
 BLUE = (41, 128, 185)
 BLACK = (0, 0, 0)
@@ -11,7 +12,6 @@ WHITE = (255, 255, 255)
 GREY = (30, 30, 30)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
-
 
 class AnimationWindow:
     frame = 0
@@ -21,7 +21,7 @@ class AnimationWindow:
     window_width = 800
     window_height = 800
 
-    population = 200
+    population = 100
     infection_radius = 8
     social_distance_radius = 10
     percentage_of_population_social_distancing = 0.5
@@ -35,12 +35,15 @@ class AnimationWindow:
     def initialize(this):
         Circle.circles.clear()
         global FPSCLOCK, DISPLAYSURF
+        pyg.display.set_caption("Test")
+        pos_x = 1920 - AnimationWindow.window_width - 50
+        pos_y = 1080 - AnimationWindow.window_height - 50
+        os.environ['SDL_VIDEO_WINDOW_POS'] = "%i,%i" % (pos_x,pos_y)
         pyg.init()
         FPSCLOCK = pyg.time.Clock()
         DISPLAYSURF = pyg.display.set_mode(
             (AnimationWindow.window_width, AnimationWindow.window_height)
         )
-        pyg.display.set_caption("Test")
 
         rn.seed(t.time())
         social_distancing = True
@@ -86,6 +89,7 @@ class AnimationWindow:
         # drawGrid()
 
         Circle.move(Circle.circles)
+        Circle.recovery()
         Circle.collision()
         Circle.collision_boundary(Circle.circles, this.boundary)
 
@@ -118,6 +122,11 @@ class Circle:
         this.y = y
         this.id = id
         this.social_distancing = social_distancing
+        this.infection_probability = 0.01
+        this.social_distancing_efficiency = 1
+        this.color = RED if infected else BLUE
+        this.infection_frame = 0
+        this.infection_duration = 500
         this.infected = infected
         this.thickness = thickness
         this.direction = direction
@@ -157,15 +166,21 @@ class Circle:
 
             c.locate_circle_in_grid(Circle.grid)
 
-            if c.infected:
-                pass
-
         Circle.get_possible_collisions()
+
+    def recovery():
+        for infected in InfectionCircle.infected_circles:
+            c = Circle.circles[infected.id]
+            if AnimationWindow.frame > int(c.infection_frame + c.infection_duration):
+                c.color = GREY
+                c.infected = False
+                c.infection_probability = 0
+                infected.recover()
 
     def draw(circles, surface):
         for c in circles:
             pyg.draw.circle(
-                surface, RED if c.infected else BLUE, (c.x, c.y), c.radius, c.thickness
+                surface, c.color, (c.x, c.y), c.radius, c.thickness
             )
 
     def collision_boundary(circles, boundary):
@@ -192,18 +207,24 @@ class Circle:
                     if ((c1.x - c2.x) ** 2 + (c1.y - c2.y) ** 2) < (
                         2 * (AnimationWindow.infection_radius)
                     ) ** 2:
+                        proba = rn.random()
                         if c1.infected:
-                            if not c2.infected:
+                            if not c2.infected and c2.infection_probability > proba:
                                 InfectionCircle(c2.id) 
                                 c2.infected = True
+                                c2.color = RED
+                                c2.infection_frame = AnimationWindow.frame
                         elif c2.infected:
-                            if not c1.infected:
+                            if not c1.infected  and c1.infection_probability > proba:
                                 InfectionCircle(c1.id)
                                 c1.infected = True
+                                c1.color = RED
+                                c1.infection_frame = AnimationWindow.frame
 
                     already_collided_in_this_frame = (
                         c2.id in c1.circles_indexes_in_collision
                     ) or (c1.id in c2.circles_indexes_in_collision)
+
                     both_of_them_not_social_distancing = (
                         not c1.social_distancing and not c2.social_distancing
                     )
@@ -258,6 +279,20 @@ class Circle:
 
                         c2.budge_x = budge_x
                         c2.budge_y = budge_y
+                        
+                        proba = rn.random()
+                        if c1.infected:
+                            if not c2.infected and c2.social_distancing_efficiency < proba:
+                                InfectionCircle(c2.id) 
+                                c2.infected = True
+                                c2.color = RED
+                                c2.infection_frame = AnimationWindow.frame
+                        elif c2.infected:
+                            if not c1.infected  and c1.social_distancing_efficiency < proba:
+                                InfectionCircle(c1.id)
+                                c1.infected = True
+                                c1.color = RED
+                                c1.infection_frame = AnimationWindow.frame
                 j += 1
 
     def locate_circle_in_grid(c, grid):
@@ -401,6 +436,9 @@ class InfectionCircle:
             if(infected.frame > InfectionCircle.end_frame):
                 infected.frame = 0
                 infected.alpha = 255
+
+    def recover(this):
+        InfectionCircle.infected_circles.remove(this)
 
 def distance(x1, y1, x2, y2):
     return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)

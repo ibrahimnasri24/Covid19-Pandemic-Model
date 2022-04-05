@@ -16,8 +16,9 @@ class GUI:
         self.root.geometry("1080x720+100+100")
         self.root.wm_title("Covid19 Model")
         self.content = tk.Frame(self.root)
-
-        self.canvas = FigureCanvasTkAgg(graph.Graph.fig, master=self.content)
+        
+        self.graph = graph.Graph()
+        self.canvas = FigureCanvasTkAgg(self.graph.fig, master=self.content)
         button_start = tk.Button(master=self.content, text="Start", command=self.start_animation_window)
 
         nb_col = 10
@@ -45,11 +46,14 @@ class GUI:
 
     def start_animation_window(self):
         if self.first_time:
-            result = multiprocessing.Array('d', 2)
-            graph.Graph.reset()
-            graph.Graph.mainfunc(result, self.canvas)
+            self.result = multiprocessing.Array('d', 2)
+            self.graph.mainfunc(self.result, self.canvas)
+        else:
+            self.graph.reset()
         self.first_time = False
-        p2 = multiprocessing.Process(target=animation_window.main, args=(True, result))
+        self.result[0] = 0
+        self.result[1] = 0
+        p2 = multiprocessing.Process(target=animation_window.main, args=(True, self.result))
         p2.start()
 
 if __name__ == "__main__":
