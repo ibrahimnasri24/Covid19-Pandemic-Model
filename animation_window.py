@@ -417,6 +417,7 @@ def drawGrid():
         )
 
 def main(t, result):
+    print("openning window")
     anim_w = AnimationWindow()
     anim_w.initialize()
     while(AnimationWindow.running):
