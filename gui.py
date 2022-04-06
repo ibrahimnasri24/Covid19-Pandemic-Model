@@ -1,5 +1,4 @@
 import multiprocessing
-import this
 import tkinter as tk
 from tkinter import *
 
@@ -14,14 +13,22 @@ class GUI:
         self.first_time = True
         self.root = tk.Tk()
         self.root.protocol("WM_DELETE_WINDOW", self.quit)
-        self.root.geometry("1080x720+100+100")
+        self.root.geometry("1080x1000+0+0")
         self.root.wm_title("Covid19 Model")
+        # self.root.state("zoomed") # open window maximized
         self.content = tk.Frame(self.root)
 
         self.graph = graph.Graph()
         self.canvas = FigureCanvasTkAgg(self.graph.fig, master=self.content)
         button_start = tk.Button(
             master=self.content, text="Start", command=self.start_animation_window
+        )
+
+        social_ditancing_percentage_slider = Slider(
+            self.content, "Percentage of Population Social Distancing:"
+        )
+        social_ditancing_efficiency_slider = Slider(
+            self.content, "Social Distancing Efficiency:"
         )
 
         nb_col = 10
@@ -38,6 +45,12 @@ class GUI:
             padx=5,
         )
         button_start.grid(column=7, row=0, pady=5, padx=5)
+        social_ditancing_efficiency_slider.frame.grid(
+            column=0, row=5, columnspan=3, sticky="we", padx=5, pady=5
+        )
+        social_ditancing_percentage_slider.frame.grid(
+            column=0, row=6, columnspan=3, sticky="we", padx=5, pady=5
+        )
 
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(0, weight=1)
@@ -57,13 +70,14 @@ class GUI:
 
     def start_animation_window(self):
         if self.first_time:
-            self.result = multiprocessing.Array("d", 2)
+            self.result = multiprocessing.Array("d", 3)
             self.graph.mainfunc(self.result, self.canvas)
         else:
             self.graph.reset()
         self.first_time = False
-        self.result[0] = 0
-        self.result[1] = 0
+        self.result[0] = 0  # time (frame nb)
+        self.result[1] = 0  # infeted percentage of population
+        self.result[2] = 0  # animation window exit flag
         p2 = multiprocessing.Process(
             target=animation_window.main, args=(True, self.result)
         )
@@ -72,17 +86,24 @@ class GUI:
 
 class Slider:
     def __init__(
-        self, parent, label, orientation=HORIZONTAL, length=200, from_=0, to_=100
+        self, parent, label, orientation=HORIZONTAL, length=350, from_=0, to_=100
     ):
         self.frame = tk.Frame(parent)
         self.scale = tk.Scale(
             self.frame, orient=orientation, length=length, from_=from_, to=to_
         )
         self.label = tk.Label(self.frame, text=label)
+
         self.frame.grid(column=0, row=0)
-        self.scale.grid(culomn=0, row=1, sticky="we")
-        self.scale.grid(culomn=0, row=0, sticky="we")
+        self.scale.grid(column=1, row=0, sticky="we")
+        self.label.grid(column=0, row=0, sticky="es", pady=2, padx=15)
+        self.label.configure(font=("Ariel", 14))
+
+        self.frame.columnconfigure(0, weight=1)
+        self.frame.columnconfigure(1, weight=2)
+        self.frame.rowconfigure(0, weight=1)
 
 
 if __name__ == "__main__":
     gui = GUI()
+    gui.result[2] = 1  # setting exit flag to 1
