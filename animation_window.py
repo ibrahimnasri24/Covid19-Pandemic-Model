@@ -9,7 +9,7 @@ import os
 BLUE = (41, 128, 185)
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
-GREY = (30, 30, 30)
+GREY = (80, 80, 80)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 
@@ -21,10 +21,10 @@ class AnimationWindow:
     window_width = 800
     window_height = 800
 
-    population = 100
+    population = 350
     infection_radius = 8
     social_distance_radius = 10
-    percentage_of_population_social_distancing = 0.5
+    percentage_of_population_social_distancing = 0.3
 
     def __init__(
         this,
@@ -36,8 +36,8 @@ class AnimationWindow:
         Circle.circles.clear()
         global FPSCLOCK, DISPLAYSURF
         pyg.display.set_caption("Test")
-        pos_x = 1920 - AnimationWindow.window_width - 50
-        pos_y = 1080 - AnimationWindow.window_height - 50
+        pos_x = 1920 - AnimationWindow.window_width - 30
+        pos_y = 1080 - AnimationWindow.window_height - 30
         os.environ['SDL_VIDEO_WINDOW_POS'] = "%i,%i" % (pos_x,pos_y)
         pyg.init()
         FPSCLOCK = pyg.time.Clock()
@@ -81,9 +81,9 @@ class AnimationWindow:
                 pyg.quit()
                 return False
 
-        DISPLAYSURF.fill(BLACK)
+        DISPLAYSURF.fill(WHITE)
 
-        pyg.draw.rect(DISPLAYSURF, WHITE, this.boundary, 2)
+        pyg.draw.rect(DISPLAYSURF, BLACK, this.boundary, 2)
         Circle.draw(Circle.circles, DISPLAYSURF)
         InfectionCircle.draw(DISPLAYSURF)
         # drawGrid()
@@ -102,7 +102,7 @@ class AnimationWindow:
 
 class Circle:
     radius = 5
-    v_magnitude = 1.2
+    v_magnitude = 1
 
     grid_size = 2 * AnimationWindow.social_distance_radius + 4
 
