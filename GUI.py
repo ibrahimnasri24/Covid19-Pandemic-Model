@@ -94,7 +94,7 @@ class GraphGUI(tk.Frame):
         button_start.grid(column=0, row=7, pady=5, padx=5)
 
         social_distancing_efficiency_slider.frame.grid(
-            column=6, row=0, columnspan=5, sticky="we", padx=5, pady=0
+            column=6, row=0, columnspan=3, sticky="we", padx=5, pady=0
         )
         infection_probability_slider.frame.grid(
             column=6, row=1, columnspan=3, sticky="we", padx=5, pady=0
@@ -163,22 +163,44 @@ class SettingsGUI(tk.Frame):
 
 class Slider:
     def __init__(
-        self, parent, label, orientation=HORIZONTAL, length=250, from_=0, to_=100
+        self,
+        parent,
+        label,
+        orientation=HORIZONTAL,
+        length=250,
+        from_=0,
+        to_=100,
+        initial_value=0,
     ):
+        self.value = str(initial_value)
         self.frame = tk.Frame(parent)
         self.scale = ttk.Scale(
-            self.frame, orient=orientation, length=length, from_=from_, to=to_
+            self.frame,
+            orient=orientation,
+            length=length,
+            from_=from_,
+            to=to_,
+            value=initial_value,
+            command=self.update_label,
         )
-        self.label = tk.Label(self.frame, text=label)
+        self.label_title = tk.Label(self.frame, text=label)
+        self.label_value = tk.Label(self.frame, text=str(initial_value), width=6)
+        self.label_title.configure(font=("Ariel", 14))
+        self.label_value.configure(font=("Ariel", 11))
 
         self.frame.grid(column=0, row=0)
-        self.label.grid(column=0, row=0, sticky="we")
+        self.label_title.grid(column=0, row=0, columnspan=2, sticky="we")
         self.scale.grid(column=0, row=1, sticky="we")
-        self.label.configure(font=("Ariel", 14))
+        self.label_value.grid(column=1, row=1, sticky="we")
 
-        self.frame.columnconfigure(0, weight=1)
+        self.frame.columnconfigure(0, weight=8)
+        self.frame.columnconfigure(1, weight=1)
         self.frame.rowconfigure(0, weight=1)
         self.frame.rowconfigure(1, weight=1)
+
+    def update_label(self, value):
+        lb_val = float(value)
+        self.label_value["text"] = "{:.2f}".format(lb_val)
 
 
 if __name__ == "__main__":

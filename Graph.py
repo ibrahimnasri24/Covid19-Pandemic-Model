@@ -43,6 +43,6 @@ class Graph:
 
     def mainfunc(self, result, canvas):
         anim = animation.FuncAnimation(
-            self.fig, self.animate, frames=self.frames(result), interval=100, blit=False
+            self.fig, self.animate, frames=self.frames(result), interval=150, blit=False
         )
         canvas.draw()
