@@ -20,9 +20,9 @@ class AnimationWindow:
 
     FPS = 60
     window_width = 800
-    window_height = 800
+    window_height = 1000
 
-    population = 200
+    population = 300
     infection_radius = 8
     social_distance_radius = 10
     percentage_of_population_social_distancing = 0.3
@@ -37,8 +37,8 @@ class AnimationWindow:
         Circle.circles.clear()
         global FPSCLOCK, DISPLAYSURF
         pyg.display.set_caption("Test")
-        pos_x = 1920 - AnimationWindow.window_width - 30
-        pos_y = 1080 - AnimationWindow.window_height - 100
+        pos_x = 1920 - AnimationWindow.window_width
+        pos_y = 32
         os.environ["SDL_VIDEO_WINDOW_POS"] = "%i,%i" % (pos_x, pos_y)
         pyg.init()
         FPSCLOCK = pyg.time.Clock()
@@ -118,8 +118,8 @@ class Circle:
         this.y = y
         this.id = id
         this.social_distancing = social_distancing
-        this.infection_probability = 1
-        this.social_distancing_efficiency = 0.9
+        this.infection_probability = 0.75
+        this.social_distancing_efficiency = 0.8
         this.color = RED if infected else BLUE
         this.infection_frame = 0
         this.infection_duration = 500
@@ -147,8 +147,8 @@ class Circle:
         for c in Circle.circles:
             c.grid_cells.clear()
             c.circles_indexes_in_collision.clear()
-            # rn.seed(c.x)
-            wander_step = rn.normalvariate(0, 0.2) * Circle.v_magnitude * 0.55
+
+            wander_step = rn.normalvariate(0, 0.8) * Circle.v_magnitude * 0.3
             if rn.random() > 0.5:
                 c.v[0] += wander_step
             else:
@@ -181,7 +181,7 @@ class Circle:
 
     def collision_boundary(circles, boundary):
         offset = 70
-        reflection_strength = 0.7
+        reflection_strength = Circle.v_magnitude / 4
         for c in circles:
             if c.x - c.radius < boundary[0] + offset:
                 c.v[0] += reflection_strength
@@ -263,10 +263,17 @@ class Circle:
                                         c1.color = RED
                                         c1.infection_frame = AnimationWindow.frame
 
-                            if ((c1.x - c2.x) ** 2 + (c1.y - c2.y) ** 2) < (
+                            # if ((c1.x - c2.x) ** 2 + (c1.y - c2.y) ** 2) < (
+                            #     2 * (Circle.radius)
+                            # ) ** 2:
+                            #     Circle.bounce(c1, c2, Circle.radius)
+                            #     if infect_overlap:
+                            #         c1.circles_indexes_infect_overlap.remove(c2.id)
+                            #         c2.circles_indexes_infect_overlap.remove(c1.id)
+
+                            if ((c1.x - c2.x) ** 2 + (c1.y - c2.y) ** 2) > (
                                 2 * (Circle.radius)
                             ) ** 2:
-                                Circle.bounce(c1, c2, Circle.radius)
                                 if infect_overlap:
                                     c1.circles_indexes_infect_overlap.remove(c2.id)
                                     c2.circles_indexes_infect_overlap.remove(c1.id)
@@ -425,15 +432,16 @@ class Circle:
     def get_possible_collisions():
         Circle.possible_collisions.clear()
         i = 0
-        for i in range(Circle.rows):
+        for i in range(Circle.cols):
             j = 0
-            for j in range(Circle.cols):
+            for j in range(Circle.rows):
                 leng = len(Circle.grid[i][j])
                 if leng > 1:
                     Circle.possible_collisions.append((i, j))
 
 
 class InfectionCircle:
+    recovered = 0
     infected_circles = []
     end_frame = 60
     infection_circle_radius = 17
@@ -483,6 +491,7 @@ class InfectionCircle:
 
     def recover(this):
         InfectionCircle.infected_circles.remove(this)
+        InfectionCircle.recovered += 1
 
 
 def distance(x1, y1, x2, y2):
@@ -510,7 +519,13 @@ def main(t, result):
         result[1] = (
             len(InfectionCircle.infected_circles) / AnimationWindow.population * 100
         )
-        if result[2] == 1:
+        result[2] = (
+            (AnimationWindow.population - InfectionCircle.recovered)
+            / AnimationWindow.population
+            * 100
+        )
+
+        if result[3] == 1:
             break
 
 
@@ -521,4 +536,4 @@ def testing_main():
         AnimationWindow.running = anim_w.main_loop(Circle)
 
 
-testing_main()
+# testing_main()
