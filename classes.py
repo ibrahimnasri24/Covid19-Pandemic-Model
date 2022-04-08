@@ -14,29 +14,32 @@ GREY = (30, 30, 30)
 LIGHT_GREEN = (144, 238, 144)
 GREEN = (0, 100, 0)
 
-POPULATION = 200
 
 RADIUS = 5
 VELOCITY = 1
 
-INFECTION_RADIUS = 15
 NUMBER_OF_INFECTED = 2
 INFECTION_PROBABILITY = 1
 MAX_INFECTION_DURATION = 300  # in frames
 MIN_INFECTION_DURATION = 100  # in frames
 
-SOCIAL_DISTANCE_RADIUS = 10
 PERCENTAGE_OF_POPULATION_SOCIAL_DISTANCING = 1
 SOCIAL_DISTANCING_EFFECIENCY = 1
 
 FRAMES_PER_DAY = 20
 OFFSET = 70
 
+
+class Constants:
+    POPULATION = 200
+    INFECTION_RADIUS = 8
+    SOCIAL_DISTANCE_RADIUS = 10
+
+
 all_population = []
 susceptible_population = []
 infected_population = []
-# infection_radius_animation = []
-infection_radius_animation = [None] * POPULATION
+infection_radius_animation = [None] * Constants.POPULATION
 recovered_population = []
 vaccinated1_population = []
 vaccinated2_population = []
@@ -55,7 +58,7 @@ class AnimationWindow:
     window_width = 800
     window_height = 1000
 
-    grid_size = 2 * SOCIAL_DISTANCE_RADIUS + 4
+    grid_size = 2 * Constants.SOCIAL_DISTANCE_RADIUS + 15
 
     cols = int(window_width / grid_size)
     rows = int(window_height / grid_size)
@@ -83,7 +86,7 @@ class AnimationWindow:
         )
         population = Population(
             1,
-            POPULATION,
+            Constants.POPULATION,
             NUMBER_OF_INFECTED,
             PERCENTAGE_OF_POPULATION_SOCIAL_DISTANCING,
         )
@@ -159,7 +162,6 @@ class Population:
             )
             infected.Infect(0)
             all_population.append(infected)
-            infected_population.append(infected.id)
             InfectionRadiusAnimation(infected.id)
 
     def move():
@@ -190,7 +192,9 @@ class Population:
             for c1 in pos_col_arr:
                 for c2 in pos_col_arr[j + 1 :]:
 
-                    sd_smaller_inf = SOCIAL_DISTANCE_RADIUS < INFECTION_RADIUS
+                    sd_smaller_inf = (
+                        Constants.SOCIAL_DISTANCE_RADIUS < Constants.INFECTION_RADIUS
+                    )
 
                     already_collided_in_this_frame = (
                         c2.id in c1.circles_indexes_in_collision
@@ -205,7 +209,7 @@ class Population:
                     # )
 
                     sdist_collision = ((c1.x - c2.x) ** 2 + (c1.y - c2.y) ** 2) < (
-                        2 * (SOCIAL_DISTANCE_RADIUS)
+                        2 * (Constants.SOCIAL_DISTANCE_RADIUS)
                     ) ** 2
 
                     if sd_smaller_inf:
@@ -214,7 +218,7 @@ class Population:
                         ) or (c1.id in c2.circles_indexes_infect_overlap)
 
                         if ((c1.x - c2.x) ** 2 + (c1.y - c2.y) ** 2) < (
-                            2 * (INFECTION_RADIUS)
+                            2 * (Constants.INFECTION_RADIUS)
                         ) ** 2 and not infect_overlap:  # checking collision according to infection radius
 
                             c1.circles_indexes_infect_overlap.append(c2.id)
@@ -245,7 +249,9 @@ class Population:
                                 c2.social_distancing_efficiency > proba
                                 or c1.social_distancing_efficiency > proba
                             ):
-                                Population.bounce(c1, c2, SOCIAL_DISTANCE_RADIUS)
+                                Population.bounce(
+                                    c1, c2, Constants.SOCIAL_DISTANCE_RADIUS
+                                )
                             else:
                                 c1.circles_indexes_sdist_overlap.append(c2.id)
                                 c2.circles_indexes_sdist_overlap.append(c1.id)
@@ -255,7 +261,7 @@ class Population:
                             ) or (c1.id in c2.circles_indexes_infect_overlap)
 
                             if ((c1.x - c2.x) ** 2 + (c1.y - c2.y) ** 2) < (
-                                2 * (INFECTION_RADIUS)
+                                2 * (Constants.INFECTION_RADIUS)
                             ) ** 2 and not infect_overlap:  # checking collision according to infection radius
 
                                 c1.circles_indexes_infect_overlap.append(c2.id)
@@ -354,7 +360,7 @@ class Population:
                 ((center_loc_in_grid[0]) * AnimationWindow.grid_size),
                 ((center_loc_in_grid[1]) * AnimationWindow.grid_size),
             )
-            < SOCIAL_DISTANCE_RADIUS
+            < Constants.SOCIAL_DISTANCE_RADIUS
         ):
             grid[center_loc_in_grid[0] - 1][center_loc_in_grid[1]].append(c)
             grid[center_loc_in_grid[0]][center_loc_in_grid[1] - 1].append(c)
@@ -371,7 +377,7 @@ class Population:
                 ((center_loc_in_grid[0]) * AnimationWindow.grid_size),
                 ((center_loc_in_grid[1] + 1) * AnimationWindow.grid_size),
             )
-            < SOCIAL_DISTANCE_RADIUS
+            < Constants.SOCIAL_DISTANCE_RADIUS
         ):
             grid[center_loc_in_grid[0] - 1][center_loc_in_grid[1]].append(c)
             grid[center_loc_in_grid[0] - 1][center_loc_in_grid[1] + 1].append(c)
@@ -388,7 +394,7 @@ class Population:
                 ((center_loc_in_grid[0] + 1) * AnimationWindow.grid_size),
                 ((center_loc_in_grid[1] + 1) * AnimationWindow.grid_size),
             )
-            < SOCIAL_DISTANCE_RADIUS
+            < Constants.SOCIAL_DISTANCE_RADIUS
         ):
             grid[center_loc_in_grid[0]][center_loc_in_grid[1] + 1].append(c)
             grid[center_loc_in_grid[0] + 1][center_loc_in_grid[1] + 1].append(c)
@@ -405,7 +411,7 @@ class Population:
                 ((center_loc_in_grid[0] + 1) * AnimationWindow.grid_size),
                 ((center_loc_in_grid[1]) * AnimationWindow.grid_size),
             )
-            < SOCIAL_DISTANCE_RADIUS
+            < Constants.SOCIAL_DISTANCE_RADIUS
         ):
             grid[center_loc_in_grid[0]][center_loc_in_grid[1] - 1].append(c)
             grid[center_loc_in_grid[0] + 1][center_loc_in_grid[1] - 1].append(c)
@@ -417,28 +423,28 @@ class Population:
 
         else:
             if (
-                c.x - SOCIAL_DISTANCE_RADIUS
+                c.x - Constants.SOCIAL_DISTANCE_RADIUS
                 < center_loc_in_grid[0] * AnimationWindow.grid_size
             ):
                 grid[center_loc_in_grid[0] - 1][center_loc_in_grid[1]].append(c)
                 c.grid_cells.append((center_loc_in_grid[0] - 1, center_loc_in_grid[1]))
 
             if (
-                c.y - SOCIAL_DISTANCE_RADIUS
+                c.y - Constants.SOCIAL_DISTANCE_RADIUS
                 < center_loc_in_grid[1] * AnimationWindow.grid_size
             ):
                 grid[center_loc_in_grid[0]][center_loc_in_grid[1] - 1].append(c)
                 c.grid_cells.append((center_loc_in_grid[0], center_loc_in_grid[1] - 1))
 
             if (
-                c.y + SOCIAL_DISTANCE_RADIUS
+                c.y + Constants.SOCIAL_DISTANCE_RADIUS
                 > (center_loc_in_grid[1] + 1) * AnimationWindow.grid_size
             ):
                 grid[center_loc_in_grid[0]][center_loc_in_grid[1] + 1].append(c)
                 c.grid_cells.append((center_loc_in_grid[0], center_loc_in_grid[1] + 1))
 
             if (
-                c.x + SOCIAL_DISTANCE_RADIUS
+                c.x + Constants.SOCIAL_DISTANCE_RADIUS
                 > (center_loc_in_grid[0] + 1) * AnimationWindow.grid_size
             ):
                 grid[center_loc_in_grid[0] + 1][center_loc_in_grid[1]].append(c)
@@ -632,7 +638,7 @@ class Person:
 
 class InfectionRadiusAnimation:
     end_frame = 60
-    infection_circle_radius = 2 * INFECTION_RADIUS
+    infection_circle_radius = 2 * Constants.INFECTION_RADIUS
     radius_step = (infection_circle_radius - Person.radius) / AnimationWindow.FPS
     color_step = int((255 - 0) / AnimationWindow.FPS)
 
@@ -679,19 +685,27 @@ class InfectionRadiusAnimation:
                     infected.alpha = 255
 
     def updateRadius():
-        InfectionRadiusAnimation.infection_circle_radius = 2 * INFECTION_RADIUS
+        InfectionRadiusAnimation.infection_circle_radius = (
+            2 * Constants.INFECTION_RADIUS
+        )
         InfectionRadiusAnimation.radius_step = (
             InfectionRadiusAnimation.infection_circle_radius - Person.radius
         ) / AnimationWindow.FPS
-        InfectionRadiusAnimation.color_step = int((255 - 0) / AnimationWindow.FPS)
-        for infectionCircle in InfectionRadiusAnimation.infected_circles:
-            infectionCircle.surface = pyg.Surface(
-                (
-                    InfectionRadiusAnimation.infection_circle_radius * 2,
-                    InfectionRadiusAnimation.infection_circle_radius * 2,
-                ),
-                pyg.SRCALPHA,
-            )
+        if len(infected_population) > 0:
+            for infected in infected_population:
+                if infection_radius_animation[infected]:
+                    # print(
+                    #     infection_radius_animation[infected],
+                    #     infected,
+                    #     all_population[infected].id,
+                    # )
+                    infection_radius_animation[infected].surface = pyg.Surface(
+                        (
+                            InfectionRadiusAnimation.infection_circle_radius * 2,
+                            InfectionRadiusAnimation.infection_circle_radius * 2,
+                        ),
+                        pyg.SRCALPHA,
+                    )
 
     def Remove(id):
         infection_radius_animation[id] = None
@@ -716,27 +730,26 @@ def drawGrid():
 
 def main(result, slider_values):
     anim_w = AnimationWindow()
-    population = Population(1, 100, 1, 0.8)
     anim_w.initialize()
     while AnimationWindow.running:
-        AnimationWindow.running = anim_w.main_loop(population)
-        # print("main: ",result)
+        AnimationWindow.running = anim_w.main_loop(Population)
         result[0] = AnimationWindow.frame
-        result[1] = (
-            len(InfectionRadiusAnimation.infected_circles)
-            / AnimationWindow.population
-            * 100
-        )
+        result[1] = len(infected_population) / Constants.POPULATION * 100
+        print(len(infected_population))
         result[2] = (
-            (AnimationWindow.population - InfectionRadiusAnimation.recovered)
-            / AnimationWindow.population
+            (Constants.POPULATION - len(recovered_population))
+            / Constants.POPULATION
             * 100
         )
-        if slider_values[2] != AnimationWindow.social_distance_radius:
-            AnimationWindow.social_distance_radius = slider_values[2]
+        if slider_values[2] != Constants.SOCIAL_DISTANCE_RADIUS:
+            Constants.SOCIAL_DISTANCE_RADIUS = slider_values[2]
 
-        if slider_values[3] != AnimationWindow.social_distance_radius:
-            AnimationWindow.infection_radius = slider_values[3]
+        if slider_values[3] != Constants.INFECTION_RADIUS:
+            # print("changed")
+            # print("before", Constants.INFECTION_RADIUS)
+
+            Constants.INFECTION_RADIUS = slider_values[3]
+            # print("after", Constants.INFECTION_RADIUS)
             InfectionRadiusAnimation.updateRadius()
 
         if result[3] == 1:

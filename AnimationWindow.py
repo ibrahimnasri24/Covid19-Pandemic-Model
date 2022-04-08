@@ -564,7 +564,7 @@ def drawGrid():
         )
 
 
-def main(t, result, slider_values):
+def main(result, slider_values):
     anim_w = AnimationWindow()
     anim_w.initialize()
     while AnimationWindow.running:

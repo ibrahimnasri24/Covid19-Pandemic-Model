@@ -145,7 +145,7 @@ class GraphGUI(tk.Frame):
         self.slider_values[3] = 8
 
         p2 = multiprocessing.Process(
-            target=classes.main, args=(True, self.result, self.slider_values)
+            target=classes.main, args=(self.result, self.slider_values)
         )
         p2.start()
 
