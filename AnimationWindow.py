@@ -75,6 +75,10 @@ class AnimationWindow:
             if event.type == pyg.QUIT:
                 pyg.quit()
                 return False
+            # if event.type == pyg.KEYDOWN:
+            #     AnimationWindow.infection_radius = AnimationWindow.infection_radius + 1
+            #     InfectionCircle.updateRadius()
+            #     print(AnimationWindow.infection_radius, InfectionCircle.infection_circle_radius)
 
         DISPLAYSURF.fill(WHITE)
 
@@ -100,7 +104,7 @@ class Circle:
     radius = 5
     v_magnitude = 1
 
-    grid_size = 2 * AnimationWindow.social_distance_radius + 4
+    grid_size = 2 * AnimationWindow.social_distance_radius + 15
 
     cols = int(AnimationWindow.window_width / grid_size)
     rows = int(AnimationWindow.window_height / grid_size)
@@ -118,8 +122,8 @@ class Circle:
         this.y = y
         this.id = id
         this.social_distancing = social_distancing
-        this.infection_probability = 0.75
-        this.social_distancing_efficiency = 0.8
+        this.infection_probability = 0.5
+        this.social_distancing_efficiency = 1
         this.color = RED if infected else BLUE
         this.infection_frame = 0
         this.infection_duration = 500
@@ -199,6 +203,11 @@ class Circle:
             j = 0
             for c1 in pos_col_arr:
                 for c2 in pos_col_arr[j + 1 :]:
+                    sd_smaller_inf = (
+                        AnimationWindow.social_distance_radius
+                        < AnimationWindow.infection_radius
+                    )
+
                     already_collided_in_this_frame = (
                         c2.id in c1.circles_indexes_in_collision
                     ) or (c1.id in c2.circles_indexes_in_collision)
@@ -214,6 +223,39 @@ class Circle:
                     sdist_collision = ((c1.x - c2.x) ** 2 + (c1.y - c2.y) ** 2) < (
                         2 * (AnimationWindow.social_distance_radius)
                     ) ** 2
+
+                    if sd_smaller_inf:
+                        infect_overlap = (
+                            c2.id in c1.circles_indexes_infect_overlap
+                        ) or (c1.id in c2.circles_indexes_infect_overlap)
+
+                        if ((c1.x - c2.x) ** 2 + (c1.y - c2.y) ** 2) < (
+                            2 * (AnimationWindow.infection_radius)
+                        ) ** 2 and not infect_overlap:  # checking collision according to infection radius
+
+                            c1.circles_indexes_infect_overlap.append(c2.id)
+                            c2.circles_indexes_infect_overlap.append(c1.id)
+
+                            proba = rn.random()
+                            if c1.infected:
+                                if not c2.infected and c2.infection_probability > proba:
+                                    InfectionCircle(c2.id)
+                                    c2.infected = True
+                                    c2.color = RED
+                                    c2.infection_frame = AnimationWindow.frame
+                            elif c2.infected:
+                                if not c1.infected and c1.infection_probability > proba:
+                                    InfectionCircle(c1.id)
+                                    c1.infected = True
+                                    c1.color = RED
+                                    c1.infection_frame = AnimationWindow.frame
+
+                        if ((c1.x - c2.x) ** 2 + (c1.y - c2.y) ** 2) > (
+                            2 * (Circle.radius)
+                        ) ** 2:
+                            if infect_overlap:
+                                c1.circles_indexes_infect_overlap.remove(c2.id)
+                                c2.circles_indexes_infect_overlap.remove(c1.id)
 
                     if (
                         sdist_collision and not already_collided_in_this_frame
@@ -444,7 +486,7 @@ class InfectionCircle:
     recovered = 0
     infected_circles = []
     end_frame = 60
-    infection_circle_radius = 17
+    infection_circle_radius = 2 * AnimationWindow.infection_radius
     # frame_step = (AnimationWindow.infection_radius - Circle.radius) / AnimationWindow.FPS
     radius_step = (infection_circle_radius - Circle.radius) / AnimationWindow.FPS
     color_step = int((255 - 0) / AnimationWindow.FPS)
@@ -488,6 +530,19 @@ class InfectionCircle:
             if infected.frame > InfectionCircle.end_frame:
                 infected.frame = 0
                 infected.alpha = 255
+    
+    def updateRadius():
+        InfectionCircle.infection_circle_radius = 2 * AnimationWindow.infection_radius
+        InfectionCircle.radius_step = (InfectionCircle.infection_circle_radius - Circle.radius) / AnimationWindow.FPS
+        InfectionCircle.color_step = int((255 - 0) / AnimationWindow.FPS)
+        for infectionCircle in InfectionCircle.infected_circles:
+            infectionCircle.surface = pyg.Surface(
+            (
+                InfectionCircle.infection_circle_radius * 2,
+                InfectionCircle.infection_circle_radius * 2,
+            ),
+            pyg.SRCALPHA,
+        )
 
     def recover(this):
         InfectionCircle.infected_circles.remove(this)
@@ -509,12 +564,11 @@ def drawGrid():
         )
 
 
-def main(t, result):
+def main(t, result, slider_values):
     anim_w = AnimationWindow()
     anim_w.initialize()
     while AnimationWindow.running:
         AnimationWindow.running = anim_w.main_loop(Circle)
-        # print("main: ",result)
         result[0] = AnimationWindow.frame
         result[1] = (
             len(InfectionCircle.infected_circles) / AnimationWindow.population * 100
@@ -524,6 +578,12 @@ def main(t, result):
             / AnimationWindow.population
             * 100
         )
+        if slider_values[2] != AnimationWindow.social_distance_radius:
+            AnimationWindow.social_distance_radius = slider_values[2]
+
+        if slider_values[3] != AnimationWindow.social_distance_radius:
+            AnimationWindow.infection_radius = slider_values[3]
+            InfectionCircle.updateRadius()
 
         if result[3] == 1:
             break

@@ -5,7 +5,7 @@ from tkinter import *
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-import AnimationWindow
+import classes
 import Graph
 
 
@@ -67,12 +67,16 @@ class GraphGUI(tk.Frame):
             master=self, text="Start", command=self.start_animation_window
         )
 
-        infection_probability_slider = Slider(self, "Infection Probability:")
+        infection_probability_slider = Slider(self, "Infection Probability:", 0)
         social_distancing_efficiency_slider = Slider(
-            self, "Social Distancing Efficiency:"
+            self, "Social Distancing Efficiency:", 1
         )
-        social_distancing_radius_slider = Slider(self, "Social Distancing Radius:")
-        infection_radius_slider = Slider(self, "Infection Radius:")
+        social_distancing_radius_slider = Slider(
+            self, "Social Distancing Radius:", 2, from_=1, to_=17, initial_value=10
+        )
+        infection_radius_slider = Slider(
+            self, "Infection Radius:", 3, from_=1, to_=17, initial_value=8
+        )
 
         button_goto_settings = ttk.Button(
             self, text="Settings", command=lambda: controller.show_frame(SettingsGUI)
@@ -119,8 +123,13 @@ class GraphGUI(tk.Frame):
             self.rowconfigure(i, weight=1)
 
     def start_animation_window(self):
+        try:
+            self.result[3] = 1  # setting exit flag to 1
+        except:
+            pass
         if self.first_time:
             self.result = multiprocessing.Array("d", 4)
+            self.slider_values = multiprocessing.Array("d", 4)
             self.graph.mainfunc(self.result, self.canvas)
         else:
             self.graph.reset()
@@ -129,8 +138,14 @@ class GraphGUI(tk.Frame):
         self.result[1] = 0  # infected percentage of population
         self.result[2] = 0  # susceptible percentage of population
         self.result[3] = 0  # animation window exit flag
+
+        self.slider_values[0] = 0
+        self.slider_values[1] = 0
+        self.slider_values[2] = 10
+        self.slider_values[3] = 8
+
         p2 = multiprocessing.Process(
-            target=AnimationWindow.main, args=(True, self.result)
+            target=classes.main, args=(True, self.result, self.slider_values)
         )
         p2.start()
 
@@ -166,6 +181,7 @@ class Slider:
         self,
         parent,
         label,
+        index_in_shared_arr,
         orientation=HORIZONTAL,
         length=250,
         from_=0,
@@ -181,12 +197,14 @@ class Slider:
             from_=from_,
             to=to_,
             value=initial_value,
-            command=self.update_label,
+            command=self.update,
         )
         self.label_title = tk.Label(self.frame, text=label)
         self.label_value = tk.Label(self.frame, text=str(initial_value), width=6)
         self.label_title.configure(font=("Ariel", 14))
         self.label_value.configure(font=("Ariel", 11))
+
+        self.index = index_in_shared_arr
 
         self.frame.grid(column=0, row=0)
         self.label_title.grid(column=0, row=0, columnspan=2, sticky="we")
@@ -198,9 +216,13 @@ class Slider:
         self.frame.rowconfigure(0, weight=1)
         self.frame.rowconfigure(1, weight=1)
 
-    def update_label(self, value):
-        lb_val = float(value)
-        self.label_value["text"] = "{:.2f}".format(lb_val)
+    def update(self, value):
+        val = float(value)
+        self.label_value["text"] = "{:.2f}".format(val)
+
+        graph_gui = tkinterApp.apps[0].graph_gui
+        if not graph_gui.first_time:
+            graph_gui.slider_values[self.index] = val
 
 
 if __name__ == "__main__":
