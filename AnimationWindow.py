@@ -19,7 +19,7 @@ RADIUS = 5
 VELOCITY = 1
 
 NUMBER_OF_POPULATIONS = 1
-NUMBER_OF_INFECTED = 2
+NUMBER_OF_INFECTED = 1
 MAX_INFECTION_DURATION = 300  # in frames
 MIN_INFECTION_DURATION = 100  # in frames
 
@@ -34,9 +34,9 @@ OFFSET = 70
 
 
 class Constants:
-    POPULATION = 400
+    POPULATION = 50
     INFECTION_RADIUS = 8
-    SOCIAL_DISTANCE_RADIUS = 5
+    SOCIAL_DISTANCE_RADIUS = 10
     INFECTION_PROBABILITY = 0.7
     SOCIAL_DISTANCING_EFFECIENCY = 1
     PERCENTAGE_OF_POPULATION_SOCIAL_DISTANCING = 1
@@ -100,9 +100,8 @@ class AnimationWindow:
                         BOUNDARY_WIDTH_TRAVEL,
                     )
                     population = Population(
-                        i,
                         Constants.POPULATION,
-                        NUMBER_OF_INFECTED,
+                        NUMBER_OF_INFECTED if i == 2 and j == 1 else 0,
                         Constants.PERCENTAGE_OF_POPULATION_SOCIAL_DISTANCING,
                         boundary,
                     )
@@ -117,7 +116,6 @@ class AnimationWindow:
                 BOUNDARY_HEIGHT_NO_TRAVEL,
             )
             population = Population(
-                1,
                 Constants.POPULATION,
                 NUMBER_OF_INFECTED,
                 Constants.PERCENTAGE_OF_POPULATION_SOCIAL_DISTANCING,
@@ -155,6 +153,8 @@ class AnimationWindow:
             # print(len(susceptible_population),len(infected_population),len(recovered_population))
             if AnimationWindow.frame % FRAMES_PER_DAY == 0:
                 population.Update_Infection_Probability(AnimationWindow.frame)
+            # if AnimationWindow.frame == 0:
+            #     population.Vaccinate(0.5)
 
         pyg.display.update()
         FPSCLOCK.tick(AnimationWindow.FPS)
@@ -169,14 +169,13 @@ class Population:
 
     def __init__(
         this,
-        id,
         number_of_population,
         number_of_infected,
         percentage_of_population_social_distancing,
         boundary,
     ):
+        this.id = Population.number_of_populations
         Population.number_of_populations += 1
-        this.id = id
         this.number_of_population = number_of_population
         this.number_of_infected = number_of_infected
         this.boundary = boundary
@@ -232,9 +231,9 @@ class Population:
             this.all_population.append(infected)
             InfectionRadiusAnimation(infected.id, this)
 
-        this.all_population[0].Vaccinate(0)
-        this.all_population[0].Vaccinate(0)
-        this.all_population[1].Vaccinate(0)
+        # this.all_population[0].Vaccinate(0)
+        # this.all_population[0].Vaccinate(0)
+        # this.all_population[1].Vaccinate(0)
         all_population.extend(this.all_population)
 
     def move(this):
@@ -248,6 +247,12 @@ class Population:
     def recovery(this):
         for infected in this.infected_population:
             this.all_population[infected].recovery()
+
+    def Vaccinate(this, percentage_vaccination):
+        number_of_vaccination = int(this.number_of_population * percentage_vaccination)
+        for i in range(number_of_vaccination):
+            index = rn.randint(0, this.number_of_population - 1)
+            this.all_population[index].Vaccinate(AnimationWindow.frame)
 
     def draw(this, surface):
         for person in this.all_population:
@@ -853,9 +858,51 @@ def updateSliderControls(slider_values):
             person.calculate_social_distancing_efficiency()
 
 
-def main(result, slider_values, travel):
+def Travel():
+    population_index_source = rn.randint(0, 5)
+    population_index_destination = population_index_source
+    while population_index_destination == population_index_source:
+        population_index_destination = rn.randint(0, 5)
+    traveling_person_index = rn.randint(0, Constants.POPULATION)
+    traveling_person = populations[population_index_source].all_population.pop(
+        traveling_person_index
+    )
+    old_id = traveling_person.id
+    new_id = populations[population_index_destination].number_of_population
+    traveling_person.id = new_id
+    traveling_person.population = populations[population_index_destination]
+    populations[population_index_destination].number_of_population += 1
+    populations[population_index_destination].all_population.append(traveling_person)
+
+    if old_id in populations[population_index_source].susceptible_population:
+        populations[population_index_source].susceptible_population.remove(old_id)
+        populations[population_index_destination].susceptible_population.append(new_id)
+    elif old_id in populations[population_index_source].infected_population:
+        populations[population_index_source].infected_population.remove(old_id)
+        populations[population_index_destination].infected_population.append(new_id)
+    elif old_id in populations[population_index_source].infection_radius_animation:
+        populations[population_index_source].infection_radius_animation[old_id] = None
+        InfectionRadiusAnimation(new_id, populations[population_index_source])
+    elif old_id in populations[population_index_source].recovered_population:
+        populations[population_index_source].recovered_population.remove(old_id)
+        populations[population_index_destination].recovered_population.append(new_id)
+    elif old_id in populations[population_index_source].vaccinated1_population:
+        populations[population_index_source].vaccinated1_population.remove(old_id)
+        populations[population_index_destination].vaccinated1_population.append(new_id)
+    elif old_id in populations[population_index_source].vaccinated2_population:
+        populations[population_index_source].vaccinated2_population.remove(old_id)
+        populations[population_index_destination].vaccinated2_population.append(new_id)
+    populations[population_index_source].number_of_population -= 1
+
+    print(
+        f"Travel: source: {population_index_source} dest: {population_index_destination}"
+    )
+
+
+def main(result, slider_values, vaccination_control, travel):
     anim_w = AnimationWindow(travel)
     updateSliderControls(slider_values)
+    Travel()
     while AnimationWindow.running:
         AnimationWindow.running = anim_w.main_loop()
         result[0] = AnimationWindow.frame
@@ -871,16 +918,23 @@ def main(result, slider_values, travel):
             )
             / (Constants.POPULATION * Population.number_of_populations)
         ) * 100
+
         updateSliderControls(slider_values)
+        if vaccination_control[0] == 1:
+            vaccination_control[0] = 0
+            vaccination_percentage = vaccination_control[1] / 100
+            for population in populations:
+                population.Vaccinate(vaccination_percentage)
 
         if result[3] == 1:
             break
 
 
 def testing_main():
-    anim_w = AnimationWindow(False)
+    anim_w = AnimationWindow(True)
+    Travel()
     while AnimationWindow.running:
         AnimationWindow.running = anim_w.main_loop()
 
 
-# testing_main()
+testing_main()

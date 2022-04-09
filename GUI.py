@@ -16,38 +16,38 @@ class tkinterApp(tk.Tk):
 
     apps = []
 
-    def __init__(self, *args, **kwargs):
+    def __init__(this, *args, **kwargs):
 
-        tk.Tk.__init__(self, *args, **kwargs)
-        self.defaultFont = font.nametofont("TkDefaultFont")
-        self.defaultFont.configure(family="Ariel", size=14)
+        tk.Tk.__init__(this, *args, **kwargs)
+        this.defaultFont = font.nametofont("TkDefaultFont")
+        this.defaultFont.configure(family="Ariel", size=14)
 
-        self.protocol("WM_DELETE_WINDOW", quit)
-        self.geometry("1110x1000+0+0")
-        self.wm_title("Covid19 Model")
+        this.protocol("WM_DELETE_WINDOW", quit)
+        this.geometry("1110x1000+0+0")
+        this.wm_title("Covid19 Model")
 
-        container = tk.Frame(self)
+        container = tk.Frame(this)
         container.pack(side="top", fill="both", expand=True)
 
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
 
-        self.frames = {}
+        this.frames = {}
 
-        self.graph_gui = GraphGUI(container, self)
-        self.graph_gui.grid(row=0, column=0, sticky="nsew")
-        self.frames[GraphGUI] = self.graph_gui
+        this.graph_gui = GraphGUI(container, this)
+        this.graph_gui.grid(row=0, column=0, sticky="nsew")
+        this.frames[GraphGUI] = this.graph_gui
 
-        self.settings_gui = SettingsGUI(container, self)
-        self.settings_gui.grid(row=0, column=0, sticky="nsew")
-        self.frames[SettingsGUI] = self.settings_gui
+        this.settings_gui = SettingsGUI(container, this)
+        this.settings_gui.grid(row=0, column=0, sticky="nsew")
+        this.frames[SettingsGUI] = this.settings_gui
 
-        tkinterApp.apps.append(self)
+        tkinterApp.apps.append(this)
 
-        self.show_frame(GraphGUI)
+        this.show_frame(GraphGUI)
 
-    def show_frame(self, cont):
-        frame = self.frames[cont]
+    def show_frame(this, cont):
+        frame = this.frames[cont]
         frame.tkraise()
 
 
@@ -58,21 +58,21 @@ def quit():
 
 
 class GraphGUI(tk.Frame):
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
+    def __init__(this, parent, controller):
+        tk.Frame.__init__(this, parent)
 
-        self.first_time = True
-        self.graph = Graph.Graph()
-        self.canvas = FigureCanvasTkAgg(self.graph.fig, master=self)
+        this.first_time = True
+        this.graph = Graph.Graph()
+        this.canvas = FigureCanvasTkAgg(this.graph.fig, master=this)
         button_start = ttk.Button(
-            master=self, text="Start", command=self.start_animation_window
+            master=this, text="Start", command=this.start_animation_window
         )
 
         infection_probability_slider = Slider(
-            self, "Infection Probability:", 0, True, from_=0, to_=1, initial_value=1
+            this, "Infection Probability:", 0, True, from_=0, to_=1, initial_value=1
         )
         social_distancing_efficiency_slider = Slider(
-            self,
+            this,
             "Social Distancing Efficiency:",
             1,
             True,
@@ -81,7 +81,7 @@ class GraphGUI(tk.Frame):
             initial_value=1,
         )
         social_distancing_radius_slider = Slider(
-            self,
+            this,
             "Social Distancing Radius:",
             2,
             False,
@@ -90,10 +90,10 @@ class GraphGUI(tk.Frame):
             initial_value=10,
         )
         infection_radius_slider = Slider(
-            self, "Infection Radius:", 3, False, from_=1, to_=17, initial_value=8
+            this, "Infection Radius:", 3, False, from_=1, to_=17, initial_value=8
         )
         percentage_social_distancing_slider = Slider(
-            self,
+            this,
             "Percentage of Population\nThat are Social Distancing:",
             4,
             True,
@@ -103,7 +103,7 @@ class GraphGUI(tk.Frame):
         )
 
         numeric_input_vaccinate = NumericInput(
-            self,
+            this,
             "Percantage of\nPopulation to Vaccinate:",
             GraphGUI.Vaccinate,
             0,
@@ -111,14 +111,14 @@ class GraphGUI(tk.Frame):
         )
 
         button_goto_settings = ttk.Button(
-            self, text="Settings", command=lambda: controller.show_frame(SettingsGUI)
+            this, text="Settings", command=lambda: controller.show_frame(SettingsGUI)
         )
 
         nb_col = 10
         nb_row = 10
 
-        self.grid(column=0, row=0, sticky=(N, S, E, W))
-        self.canvas.get_tk_widget().grid(
+        this.grid(column=0, row=0, sticky=(N, S, E, W))
+        this.canvas.get_tk_widget().grid(
             column=0,
             row=0,
             columnspan=5,
@@ -150,80 +150,97 @@ class GraphGUI(tk.Frame):
 
         button_goto_settings.grid(column=0, row=10, padx=5, pady=5)
 
-        self.columnconfigure(0, weight=1)
-        self.rowconfigure(0, weight=1)
+        this.columnconfigure(0, weight=1)
+        this.rowconfigure(0, weight=1)
 
         for i in range(int(nb_col / 2)):
-            self.columnconfigure(i, weight=1)
+            this.columnconfigure(i, weight=1)
         for i in range(int(nb_col / 2), nb_col):
-            self.columnconfigure(i, weight=2)
+            this.columnconfigure(i, weight=2)
         for i in range(nb_row):
-            self.rowconfigure(i, weight=1)
+            this.rowconfigure(i, weight=1)
 
-    def start_animation_window(self):
+    def start_animation_window(this):
         try:
-            self.result[3] = 1  # setting exit flag to 1
+            this.result[3] = 1  # setting exit flag to 1
         except:
             pass
-        if self.first_time:
-            self.result = multiprocessing.Array("d", 4)
-            self.slider_values = multiprocessing.Array("d", 5)
-            self.graph.mainfunc(self.result, self.canvas)
+        if this.first_time:
+            this.result = multiprocessing.Array("d", 4)
+            this.slider_values = multiprocessing.Array("d", 6)
+            this.vaccination_control = multiprocessing.Array("d", 2)
+            this.graph.mainfunc(this.result, this.canvas)
         else:
-            self.graph.reset()
-        self.first_time = False
-        self.result[0] = 0  # time (frame nb)
-        self.result[1] = 0  # infected percentage of population
-        self.result[2] = 0  # susceptible percentage of population
-        self.result[3] = 0  # animation window exit flag
+            this.graph.reset()
+        this.first_time = False
+        this.result[0] = 0  # time (frame nb)
+        this.result[1] = 0  # infected percentage of population
+        this.result[2] = 0  # susceptible percentage of population
+        this.result[3] = 0  # animation window exit flag
 
-        self.slider_values[0] = float(Slider.sliders[0].value)
-        self.slider_values[1] = float(Slider.sliders[1].value)
-        self.slider_values[2] = float(Slider.sliders[2].value)
-        self.slider_values[3] = float(Slider.sliders[3].value)
-        self.slider_values[4] = float(Slider.sliders[4].value)
+        this.slider_values[0] = float(Slider.sliders[0].value)
+        this.slider_values[1] = float(Slider.sliders[1].value)
+        this.slider_values[2] = float(Slider.sliders[2].value)
+        this.slider_values[3] = float(Slider.sliders[3].value)
+        this.slider_values[4] = float(Slider.sliders[4].value)
 
-        travel = False
+        this.vaccination_control[0] = 0  # Bool to signal vaccination
+        this.vaccination_control[1] = 0  # Vaccination Percentage
+        travel = True
         p2 = multiprocessing.Process(
-            target=AnimationWindow.main, args=(self.result, self.slider_values, travel)
+            target=AnimationWindow.main,
+            args=(this.result, this.slider_values, this.vaccination_control, travel),
         )
         p2.start()
 
-    def Vaccinate():
-        pass
+    def Vaccinate(this):
+        percentage_to_vaccinate = float(
+            NumericInput.numeric_inputs[0].numeric_input_val.get()
+        )
+        try:
+            if (
+                percentage_to_vaccinate > 100
+                or percentage_to_vaccinate < 0
+                or this.vaccination_control[0] == 1
+            ):
+                return
+            this.vaccination_control[0] = 1
+            this.vaccination_control[1] = percentage_to_vaccinate
+        except:
+            pass
 
 
 class SettingsGUI(tk.Frame):
-    def __init__(self, parent, controller):
+    def __init__(this, parent, controller):
 
         nb_col = 10
         nb_row = 10
 
-        tk.Frame.__init__(self, parent)
-        label = ttk.Label(self, text="Settings", font=LARGEFONT)
+        tk.Frame.__init__(this, parent)
+        label = ttk.Label(this, text="Settings", font=LARGEFONT)
         label.grid(row=0, column=4, padx=10, pady=10)
 
         button_goto_settings = ttk.Button(
-            self, text="GraphGUI", command=lambda: controller.show_frame(GraphGUI)
+            this, text="GraphGUI", command=lambda: controller.show_frame(GraphGUI)
         )
         button_goto_settings.grid(column=0, row=10, padx=5, pady=5)
 
-        self.columnconfigure(0, weight=1)
-        self.rowconfigure(0, weight=1)
+        this.columnconfigure(0, weight=1)
+        this.rowconfigure(0, weight=1)
 
         for i in range(int(nb_col / 2)):
-            self.columnconfigure(i, weight=1)
+            this.columnconfigure(i, weight=1)
         for i in range(int(nb_col / 2), nb_col):
-            self.columnconfigure(i, weight=2)
+            this.columnconfigure(i, weight=2)
         for i in range(nb_row):
-            self.rowconfigure(i, weight=1)
+            this.rowconfigure(i, weight=1)
 
 
 class NumericInput:
     numeric_inputs = []
 
     def __init__(
-        self,
+        this,
         parent,
         label,
         command,
@@ -232,35 +249,44 @@ class NumericInput:
         to_=100,
         initial_value=0,
     ):
-        self.value = initial_value
-        self.frame = tk.Frame(parent)
-        numeric_input_val = StringVar(value="0")
-        numeric_input_label = ttk.Label(self.frame, text=label, width=20)
+        this.value = initial_value
+        this.frame = tk.Frame(parent)
+        this.numeric_input_val = StringVar(value="0")
+        numeric_input_label = ttk.Label(this.frame, text=label, width=20)
         numeric_input_label.configure(font=("Ariel", 14))
 
         numeric_input = ttk.Spinbox(
-            self.frame, from_=from_, to=to_, textvariable=numeric_input_val, width=7
+            this.frame,
+            from_=from_,
+            to=to_,
+            textvariable=this.numeric_input_val,
+            width=7,
         )
         numeric_input.configure(font=("Ariel", 14))
         button_vaccinate = ttk.Button(
-            self.frame, text="Vaccinate", command=command, width=7
+            this.frame,
+            text="Vaccinate",
+            command=parent.Vaccinate,
+            width=7,
         )
-        self.frame.grid(column=0, row=0)
+        this.frame.grid(column=0, row=0)
         numeric_input_label.grid(column=0, row=0, rowspan=2, sticky="w", padx=5, pady=5)
         numeric_input.grid(column=1, row=0, sticky="we", padx=20, pady=5)
         button_vaccinate.grid(column=1, row=1, sticky="we", padx=20, pady=5)
 
-        self.frame.columnconfigure(0, weight=1)
-        self.frame.columnconfigure(1, weight=1)
-        self.frame.rowconfigure(0, weight=1)
-        self.frame.rowconfigure(1, weight=1)
+        this.frame.columnconfigure(0, weight=1)
+        this.frame.columnconfigure(1, weight=1)
+        this.frame.rowconfigure(0, weight=1)
+        this.frame.rowconfigure(1, weight=1)
+
+        NumericInput.numeric_inputs.append(this)
 
 
 class Slider:
     sliders = []
 
     def __init__(
-        self,
+        this,
         parent,
         label,
         index_in_shared_arr,
@@ -271,53 +297,53 @@ class Slider:
         to_=100,
         initial_value=0,
     ):
-        self.value = str(initial_value)
-        self.frame = tk.Frame(parent)
-        self.scale = ttk.Scale(
-            self.frame,
+        this.value = str(initial_value)
+        this.frame = tk.Frame(parent)
+        this.scale = ttk.Scale(
+            this.frame,
             orient=orientation,
             length=length,
             from_=from_,
             to=to_,
             value=initial_value,
-            command=self.update,
+            command=this.update,
         )
-        self.percentage = percentage
-        self.label_title = tk.Label(self.frame, text=label)
+        this.percentage = percentage
+        this.label_title = tk.Label(this.frame, text=label)
         lb_val = (
             "{:.1f}".format(initial_value)
-            if not self.percentage
+            if not this.percentage
             else "{:.0f} %".format(initial_value * 100)
         )
-        self.label_value = tk.Label(self.frame, text=str(lb_val), width=6)
-        self.label_title.configure(font=("Ariel", 14))
-        self.label_value.configure(font=("Ariel", 11))
+        this.label_value = tk.Label(this.frame, text=str(lb_val), width=6)
+        this.label_title.configure(font=("Ariel", 14))
+        this.label_value.configure(font=("Ariel", 11))
 
-        self.index = index_in_shared_arr
+        this.index = index_in_shared_arr
 
-        self.frame.grid(column=0, row=0)
-        self.label_title.grid(column=0, row=0, columnspan=2, sticky="w", pady=5)
-        self.scale.grid(column=0, row=1, sticky="we")
-        self.label_value.grid(column=1, row=1, sticky="we")
+        this.frame.grid(column=0, row=0)
+        this.label_title.grid(column=0, row=0, columnspan=2, sticky="w", pady=5)
+        this.scale.grid(column=0, row=1, sticky="we")
+        this.label_value.grid(column=1, row=1, sticky="we")
 
-        self.frame.columnconfigure(0, weight=8)
-        self.frame.columnconfigure(1, weight=1)
-        self.frame.rowconfigure(0, weight=1)
-        self.frame.rowconfigure(1, weight=1)
-        Slider.sliders.append(self)
+        this.frame.columnconfigure(0, weight=8)
+        this.frame.columnconfigure(1, weight=1)
+        this.frame.rowconfigure(0, weight=1)
+        this.frame.rowconfigure(1, weight=1)
+        Slider.sliders.append(this)
 
-    def update(self, value):
+    def update(this, value):
         val = float(value)
-        self.value = val
-        self.label_value["text"] = (
+        this.value = val
+        this.label_value["text"] = (
             "{:.1f}".format(val)
-            if not self.percentage
+            if not this.percentage
             else "{:.0f} %".format(val * 100)
         )
 
         graph_gui = tkinterApp.apps[0].graph_gui
         if not graph_gui.first_time:
-            graph_gui.slider_values[self.index] = val
+            graph_gui.slider_values[this.index] = val
 
 
 if __name__ == "__main__":
