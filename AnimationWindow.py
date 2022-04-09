@@ -1,6 +1,5 @@
 import random as rn
 import math
-import tracemalloc
 import pygame as pyg
 from pygame.locals import *
 import numpy as np
@@ -24,8 +23,6 @@ NUMBER_OF_INFECTED = 2
 MAX_INFECTION_DURATION = 300  # in frames
 MIN_INFECTION_DURATION = 100  # in frames
 
-PERCENTAGE_OF_POPULATION_SOCIAL_DISTANCING = 1
-
 BOUNDARY_WIDTH_NO_TRAVEL = 700
 BOUNDARY_HEIGHT_NO_TRAVEL = 700
 BOUNDARY_WIDTH_TRAVEL = 300
@@ -37,11 +34,12 @@ OFFSET = 70
 
 
 class Constants:
-    POPULATION = 80
+    POPULATION = 400
     INFECTION_RADIUS = 8
     SOCIAL_DISTANCE_RADIUS = 5
     INFECTION_PROBABILITY = 0.7
     SOCIAL_DISTANCING_EFFECIENCY = 1
+    PERCENTAGE_OF_POPULATION_SOCIAL_DISTANCING = 1
 
 
 populations = []
@@ -105,7 +103,7 @@ class AnimationWindow:
                         i,
                         Constants.POPULATION,
                         NUMBER_OF_INFECTED,
-                        PERCENTAGE_OF_POPULATION_SOCIAL_DISTANCING,
+                        Constants.PERCENTAGE_OF_POPULATION_SOCIAL_DISTANCING,
                         boundary,
                     )
                     populations.append(population)
@@ -122,7 +120,7 @@ class AnimationWindow:
                 1,
                 Constants.POPULATION,
                 NUMBER_OF_INFECTED,
-                PERCENTAGE_OF_POPULATION_SOCIAL_DISTANCING,
+                Constants.PERCENTAGE_OF_POPULATION_SOCIAL_DISTANCING,
                 boundary,
             )
             populations.append(population)
@@ -211,8 +209,6 @@ class Population:
                 social_distancing,
                 this,
             )
-            # if(person.x < 250 or person.x > 950 or person.y < 350 or person.y > 10)
-            # print(person.x, person.y)
             this.all_population.append(person)
             this.susceptible_population.append(person.id)
 
@@ -524,6 +520,21 @@ class Population:
         for c in this.all_population:
             c.Update_Infection_Probability(current_frame)
 
+    def Update_Social_Distancing():
+        for population in populations:
+            population.percentage_of_population_social_distancing = (
+                Constants.PERCENTAGE_OF_POPULATION_SOCIAL_DISTANCING
+            )
+            for i in range(Constants.POPULATION):
+                if (
+                    i
+                    < Constants.PERCENTAGE_OF_POPULATION_SOCIAL_DISTANCING
+                    * population.number_of_population
+                ):
+                    population.all_population[i].social_distancing = True
+                else:
+                    population.all_population[i].social_distancing = False
+
 
 class Person:
     radius = RADIUS
@@ -834,6 +845,12 @@ def updateSliderControls(slider_values):
 
     Constants.INFECTION_RADIUS = slider_values[3]
     InfectionRadiusAnimation.updateRadius()
+
+    if Constants.PERCENTAGE_OF_POPULATION_SOCIAL_DISTANCING != slider_values[4]:
+        Constants.PERCENTAGE_OF_POPULATION_SOCIAL_DISTANCING = slider_values[4]
+        Population.Update_Social_Distancing()
+        for person in all_population:
+            person.calculate_social_distancing_efficiency()
 
 
 def main(result, slider_values, travel):
