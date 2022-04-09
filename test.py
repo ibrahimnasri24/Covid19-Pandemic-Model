@@ -793,4 +793,4 @@ def testing_main():
         AnimationWindow.running = anim_w.main_loop()
 
 
-testing_main()
+# testing_main()
