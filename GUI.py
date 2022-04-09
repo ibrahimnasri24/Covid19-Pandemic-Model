@@ -4,9 +4,9 @@ from tkinter import ttk
 from tkinter import *
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from numpy import percentile
+from pyparsing import col
 
-import test
+import AnimationWindow
 import Graph
 
 
@@ -21,7 +21,6 @@ class tkinterApp(tk.Tk):
 
         tk.Tk.__init__(self, *args, **kwargs)
 
-        first_time = True
         self.protocol("WM_DELETE_WINDOW", quit)
         self.geometry("1110x1000+0+0")
         self.wm_title("Covid19 Model")
@@ -68,40 +67,6 @@ class GraphGUI(tk.Frame):
             master=self, text="Start", command=self.start_animation_window
         )
 
-        infection_probability_slider = Slider(
-            self, "Infection Probability:", 0, True, from_=0, to_=1, initial_value=1
-        )
-        social_distancing_efficiency_slider = Slider(
-            self,
-            "Social Distancing Efficiency:",
-            1,
-            True,
-            from_=0,
-            to_=1,
-            initial_value=1,
-        )
-        social_distancing_radius_slider = Slider(
-            self,
-            "Social Distancing Radius:",
-            2,
-            False,
-            from_=1,
-            to_=17,
-            initial_value=10,
-        )
-        infection_radius_slider = Slider(
-            self, "Infection Radius:", 3, False, from_=1, to_=17, initial_value=8
-        )
-        percentage_social_distancing_slider = Slider(
-            self,
-            "Percentage of Population\nThat are Social Distancing:",
-            4,
-            True,
-            from_=0,
-            to_=1,
-            initial_value=0.8,
-        )
-
         button_goto_settings = ttk.Button(
             self, text="Settings", command=lambda: controller.show_frame(SettingsGUI)
         )
@@ -119,23 +84,10 @@ class GraphGUI(tk.Frame):
             pady=5,
             padx=5,
         )
-        button_start.grid(column=0, row=7, pady=5, padx=5)
 
-        infection_radius_slider.frame.grid(
-            column=6, row=0, columnspan=3, sticky="we", padx=5, pady=0
-        )
-        infection_probability_slider.frame.grid(
-            column=6, row=1, columnspan=3, sticky="we", padx=5, pady=0
-        )
-        social_distancing_radius_slider.frame.grid(
-            column=6, row=2, columnspan=3, sticky="we", padx=5, pady=0
-        )
-        social_distancing_efficiency_slider.frame.grid(
-            column=6, row=3, columnspan=3, sticky="we", padx=5, pady=0
-        )
-        percentage_social_distancing_slider.frame.grid(
-            column=6, row=4, columnspan=3, sticky="we", padx=5, pady=0
-        )
+        self.Sliders()
+
+        button_start.grid(column=0, row=7, pady=5, padx=5)
 
         button_goto_settings.grid(column=0, row=10, padx=5, pady=5)
 
@@ -171,10 +123,84 @@ class GraphGUI(tk.Frame):
         self.slider_values[2] = float(Slider.sliders[2].value)
         self.slider_values[3] = float(Slider.sliders[3].value)
 
+        travel = True
         p2 = multiprocessing.Process(
-            target=test.main, args=(self.result, self.slider_values)
+            target=AnimationWindow.main, args=(self.result, self.slider_values, travel)
         )
         p2.start()
+
+    def numericInput(self):
+        frame = tk.Frame(self)
+        numeric_input_val = StringVar(value="0")
+        numeric_input = ttk.Spinbox(
+            self, from_=0, to=100, textvariable=numeric_input_val
+        )
+        button_vaccinate = ttk.Button(
+            self, text="Vaccinate", command=GraphGUI.Vaccinate
+        )
+
+        frame.grid(column=0, row=0)
+        numeric_input.grid(column=1, row=0, sticky="we")
+        button_vaccinate.grid(column=0, row=0)
+
+        frame.columnconfigure(0, weight=8)
+        frame.columnconfigure(1, weight=1)
+        frame.rowconfigure(0, weight=1)
+        frame.rowconfigure(1, weight=1)
+
+    def Vaccinate():
+        pass
+
+    def Sliders(self):
+        infection_probability_slider = Slider(
+            self, "Infection Probability:", 0, True, from_=0, to_=1, initial_value=1
+        )
+        social_distancing_efficiency_slider = Slider(
+            self,
+            "Social Distancing Efficiency:",
+            1,
+            True,
+            from_=0,
+            to_=1,
+            initial_value=1,
+        )
+        social_distancing_radius_slider = Slider(
+            self,
+            "Social Distancing Radius:",
+            2,
+            False,
+            from_=1,
+            to_=17,
+            initial_value=10,
+        )
+        infection_radius_slider = Slider(
+            self, "Infection Radius:", 3, False, from_=1, to_=17, initial_value=8
+        )
+        percentage_social_distancing_slider = Slider(
+            self,
+            "Percentage of Population\nThat are Social Distancing:",
+            4,
+            True,
+            from_=0,
+            to_=1,
+            initial_value=0.8,
+        )
+
+        infection_radius_slider.frame.grid(
+            column=6, row=0, columnspan=3, sticky="we", padx=5, pady=0
+        )
+        infection_probability_slider.frame.grid(
+            column=6, row=1, columnspan=3, sticky="we", padx=5, pady=0
+        )
+        social_distancing_radius_slider.frame.grid(
+            column=6, row=2, columnspan=3, sticky="we", padx=5, pady=0
+        )
+        social_distancing_efficiency_slider.frame.grid(
+            column=6, row=3, columnspan=3, sticky="we", padx=5, pady=0
+        )
+        percentage_social_distancing_slider.frame.grid(
+            column=6, row=4, columnspan=3, sticky="we", padx=5, pady=0
+        )
 
 
 class SettingsGUI(tk.Frame):
