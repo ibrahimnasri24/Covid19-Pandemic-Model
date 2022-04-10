@@ -20,8 +20,8 @@ VELOCITY = 1
 
 NUMBER_OF_POPULATIONS = 1
 NUMBER_OF_INFECTED = 1
-MAX_INFECTION_DURATION = 300  # in frames
-MIN_INFECTION_DURATION = 100  # in frames
+MAX_INFECTION_DURATION = 24  # in days
+MIN_INFECTION_DURATION = 7  # in days
 
 BOUNDARY_WIDTH_NO_TRAVEL = 700
 BOUNDARY_HEIGHT_NO_TRAVEL = 700
@@ -29,16 +29,16 @@ BOUNDARY_WIDTH_TRAVEL = 300
 BOUNDARY_HEIGHT_TRAVEL = 300
 
 
-FRAMES_PER_DAY = 20
+FRAMES_PER_DAY = 40
 OFFSET = 70
 
 
 class Constants:
     POPULATION = 50
-    INFECTION_RADIUS = 15
+    INFECTION_RADIUS = 8
     SOCIAL_DISTANCE_RADIUS = 10
     INFECTION_PROBABILITY = 0.7
-    SOCIAL_DISTANCING_EFFECIENCY = 1
+    SOCIAL_DISTANCING_EFFECIENCY = 0.8
     PERCENTAGE_OF_POPULATION_SOCIAL_DISTANCING = 1
 
 
@@ -270,6 +270,7 @@ class Population:
                 person.collision_boundary(this.boundary)
 
     def collision(this):
+        proba_inf = 0.2
         for cell_ind in this.possible_collisions:
             pos_col_arr = AnimationWindow.grid[cell_ind[0]][cell_ind[1]]
             j = 0
@@ -299,7 +300,7 @@ class Population:
                             c1.circles_indexes_infect_overlap.append(c2.id)
                             c2.circles_indexes_infect_overlap.append(c1.id)
 
-                            proba = rn.random()
+                            proba = proba_inf
                             if c1.infected:
                                 if not c2.infected and c2.infection_probability > proba:
                                     c2.Infect(AnimationWindow.frame)
@@ -341,7 +342,7 @@ class Population:
                                 c1.circles_indexes_infect_overlap.append(c2.id)
                                 c2.circles_indexes_infect_overlap.append(c1.id)
 
-                                proba = rn.random()
+                                proba = proba_inf
                                 if c1.infected:
                                     if (
                                         not c2.infected
@@ -579,7 +580,10 @@ class Person:
         this.calculate_social_distancing_efficiency()
 
         this.infected = False
-        this.infection_probability = rn.uniform(0, 1) * Constants.INFECTION_PROBABILITY
+        this.infection_probability_scalar = rn.uniform(0.2, 1)
+        this.infection_probability = (
+            this.infection_probability_scalar * Constants.INFECTION_PROBABILITY
+        )
         this.infection_start_frame = 0
         this.infection_end_frame = 0
 
@@ -633,7 +637,8 @@ class Person:
         this.color = RED
         this.infection_start_frame = current_frame
         this.infection_end_frame = current_frame + rn.uniform(
-            MIN_INFECTION_DURATION, MAX_INFECTION_DURATION
+            MIN_INFECTION_DURATION * FRAMES_PER_DAY,
+            MAX_INFECTION_DURATION * FRAMES_PER_DAY,
         )
         InfectionRadiusAnimation(this.id, this.population)
 
@@ -645,6 +650,7 @@ class Person:
         this.recovery_time = this.infection_end_frame
         this.infection_start_frame = 0
         this.infection_end_frame = 0
+        this.recovery_frame = AnimationWindow.frame
         if this.number_of_vaccination == 0:
             this.color = GREY
             this.population.recovered_population.append(this.id)
@@ -676,54 +682,55 @@ class Person:
             return this.infection_probability
 
         if this.number_of_vaccination == 2:
-            duration = this.vaccination["2"] - current_frame
-            if duration <= 5 * FRAMES_PER_DAY:
+            duration = current_frame - this.vaccination["2"]
+            if duration <= 10 * FRAMES_PER_DAY:
                 infection_probability = (
-                    rn.uniform(0, 0.15) * Constants.INFECTION_PROBABILITY
+                    rn.uniform(0, 0.01) * Constants.INFECTION_PROBABILITY
                 )
-            elif duration <= 10 * FRAMES_PER_DAY:
+            elif duration <= 20 * FRAMES_PER_DAY:
                 infection_probability = (
-                    rn.uniform(0, 0.25) * Constants.INFECTION_PROBABILITY
+                    rn.uniform(0, 0.05) * Constants.INFECTION_PROBABILITY
                 )
             else:
                 infection_probability = (
-                    rn.uniform(0, 0.3) * Constants.INFECTION_PROBABILITY
+                    rn.uniform(0, 0.1) * Constants.INFECTION_PROBABILITY
                 )
 
         elif this.number_of_vaccination == 1:
-            duration = this.vaccination["1"] - current_frame
-            if duration <= 5 * FRAMES_PER_DAY:
+            duration = current_frame - this.vaccination["1"]
+            if duration <= 10 * FRAMES_PER_DAY:
+                infection_probability = (
+                    rn.uniform(0, 0.1) * Constants.INFECTION_PROBABILITY
+                )
+            elif duration <= 20 * FRAMES_PER_DAY:
                 infection_probability = (
                     rn.uniform(0, 0.2) * Constants.INFECTION_PROBABILITY
                 )
-            elif duration <= 10 * FRAMES_PER_DAY:
-                infection_probability = (
-                    rn.uniform(0, 0.3) * Constants.INFECTION_PROBABILITY
-                )
             else:
                 infection_probability = (
-                    rn.uniform(0, 0.5) * Constants.INFECTION_PROBABILITY
+                    rn.uniform(0, 0.3) * Constants.INFECTION_PROBABILITY
                 )
 
         elif this.number_of_vaccination == 0:
             if this.recovery_frame == 0:
                 infection_probability = (
-                    rn.uniform(0, 1) * Constants.INFECTION_PROBABILITY
+                    this.infection_probability_scalar * Constants.INFECTION_PROBABILITY
                 )
             else:
-                duration = this.recovery_frame - current_frame
-                if duration <= 5 * FRAMES_PER_DAY:
+                duration = current_frame - this.recovery_frame
+                if duration <= 50 * FRAMES_PER_DAY:
                     infection_probability = (
-                        rn.uniform(0, 0.3) * Constants.INFECTION_PROBABILITY
+                        rn.uniform(0, 0.01) * Constants.INFECTION_PROBABILITY
                     )
-                elif duration <= 10 * FRAMES_PER_DAY:
+                elif duration <= 100 * FRAMES_PER_DAY:
                     infection_probability = (
-                        rn.uniform(0, 0.5) * Constants.INFECTION_PROBABILITY
+                        rn.uniform(0, 0.1) * Constants.INFECTION_PROBABILITY
                     )
                 else:
                     infection_probability = (
-                        rn.uniform(0, 1) * Constants.INFECTION_PROBABILITY
+                        rn.uniform(0, 0.3) * Constants.INFECTION_PROBABILITY
                     )
+                # print(duration, this.infection_probability)
 
         return infection_probability
 
@@ -948,9 +955,9 @@ def Travel():
         populations[population_index_source].vaccinated2_population.remove(old_id)
         populations[population_index_destination].vaccinated2_population.append(new_id)
 
-    print(
-        f"Travel: source: {population_index_source} dest: {population_index_destination}"
-    )
+    # print(
+    #     f"Travel: source: {population_index_source} dest: {population_index_destination}"
+    # )
 
 
 def main(result, slider_values, vaccination_control, travel):
@@ -991,4 +998,4 @@ def testing_main():
         AnimationWindow.running = anim_w.main_loop()
 
 
-testing_main()
+# testing_main()
