@@ -108,9 +108,14 @@ class GraphGUI(tk.Frame):
             initial_value=0,
         )
 
-        button_goto_settings = ttk.Button(
-            this, text="Settings", command=lambda: controller.show_frame(SettingsGUI)
-        )
+        this.travelVar = StringVar()
+        travel = ttk.Combobox(this, textvariable=this.travelVar)
+        travel["values"] = ("Without Travelling", "With Travelling")
+        travel.configure(font=("Ariel", 14))
+
+        # button_goto_settings = ttk.Button(
+        #     this, text="Settings", command=lambda: controller.show_frame(SettingsGUI)
+        # )
 
         nb_col = 10
         nb_row = 10
@@ -144,9 +149,11 @@ class GraphGUI(tk.Frame):
 
         numeric_input_vaccinate.frame.grid(column=6, row=5, columnspan=3, sticky="we")
 
-        button_start.grid(column=0, row=7, pady=5, padx=5)
+        travel.grid(column=7, row=7, padx=5, pady=5)
 
-        button_goto_settings.grid(column=0, row=10, padx=5, pady=5)
+        button_start.grid(column=7, row=8, pady=5, padx=5)
+
+        # button_goto_settings.grid(column=0, row=10, padx=5, pady=5)
 
         this.columnconfigure(0, weight=1)
         this.rowconfigure(0, weight=1)
@@ -186,7 +193,9 @@ class GraphGUI(tk.Frame):
         this.vaccination_control[0] = 0  # Bool to signal vaccination
         this.vaccination_control[1] = 0  # Vaccination Percentage
 
-        travel = True
+        travel = False
+        if this.travelVar.get() == "With Travelling":
+            travel = True
         this.travel_control[0] = travel
 
         p2 = multiprocessing.Process(
@@ -351,20 +360,8 @@ class Slider:
             graph_gui.slider_values[this.index] = val
 
 
-class ComboBox:
-    comboBoxes = []
-
-    def __init__(this, parent, label, values: list):
-        this.frame = tk.Frame(parent)
-
-        travelVar = StringVar()
-        travel = ttk.Combobox(this.frame, textvariable=travelVar)
-        travel["values"] = ("Without Travelling", "With Traveling")
-        travel.bind("<<ComboboxSelected>>", ComboBox.comboBoxSelectionChanged)
-
-        ComboBox.comboBoxes.append(this)
-
-    def comboBoxSelectionChanged():
+class ValueLabels:
+    def __init__(this):
         pass
 
 

@@ -16,7 +16,7 @@ GREEN = (0, 100, 0)
 
 
 RADIUS = 5
-VELOCITY = 1
+VELOCITY = 0.8
 
 NUMBER_OF_POPULATIONS = 1
 NUMBER_OF_INFECTED = 1
@@ -28,13 +28,15 @@ BOUNDARY_HEIGHT_NO_TRAVEL = 700
 BOUNDARY_WIDTH_TRAVEL = 300
 BOUNDARY_HEIGHT_TRAVEL = 300
 
-
-FRAMES_PER_DAY = 40
+FRAMES_PER_DAY = 30
 OFFSET = 70
+
+TRAVEL_SPEED = 2
+TRAVEL_POPULATION = 40
 
 
 class Constants:
-    POPULATION = 50
+    POPULATION = 350
     INFECTION_RADIUS = 8
     SOCIAL_DISTANCE_RADIUS = 10
     INFECTION_PROBABILITY = 0.7
@@ -65,7 +67,7 @@ class AnimationWindow:
     window_width = 800
     window_height = 1000
 
-    grid_size = 2 * Constants.SOCIAL_DISTANCE_RADIUS + 15
+    grid_size = 40
 
     cols = int(window_width / grid_size)
     rows = int(window_height / grid_size)
@@ -133,8 +135,8 @@ class AnimationWindow:
             if event.type == pyg.QUIT:
                 pyg.quit()
                 return False
-            if event.type == pyg.KEYDOWN:
-                Travel()
+            # if event.type == pyg.KEYDOWN:
+            #     Travel()
 
         DISPLAYSURF.fill(WHITE)
 
@@ -625,13 +627,18 @@ class Person:
         pyg.draw.circle(surface, this.color, (this.x, this.y), this.radius, 0)
 
     def collision_boundary(this, boundary):
-        if this.x - this.radius < 0:
+        off = 40
+        if this.x - this.radius < 0 + 40:
+            this.x = this.radius + 45
             this.v[0] *= -1
-        if this.x + this.radius > AnimationWindow.window_width:
+        if this.x + this.radius > AnimationWindow.window_width - 40:
+            this.x = AnimationWindow.window_width - this.radius - 45
             this.v[0] *= -1
-        if this.y - this.radius < 0:
+        if this.y - this.radius < 0 + 40:
+            this.y = this.radius + 45
             this.v[1] *= -1
-        if this.y + this.radius > AnimationWindow.window_height:
+        if this.y + this.radius > AnimationWindow.window_height - 40:
+            this.y = AnimationWindow.window_height - this.radius - 45
             this.v[1] *= -1
 
         person_outside_bounds = False
@@ -649,7 +656,7 @@ class Person:
             person_outside_bounds = True
         if not person_outside_bounds and this.travelling:
             this.travelling = False
-            this.velocity_magnitude /= 3
+            this.velocity_magnitude = VELOCITY
 
     def Infect(this, current_frame):
         this.infected = True
@@ -945,7 +952,7 @@ def Travel():
             traveling_person.travelling = True
             # v = traveling_person.v
             # traveling_person.v = [v[0] * 5, v[1] * 5]
-            traveling_person.velocity_magnitude *= 3
+            traveling_person.velocity_magnitude = TRAVEL_SPEED
             traveling_person.population = populations[population_index_destination]
             populations[population_index_destination].number_of_population += 1
             populations[population_index_destination].all_population.append(
@@ -1010,8 +1017,10 @@ def Travel():
             # )
 
 
-def main(result, slider_values, vaccination_control, travel):
-    anim_w = AnimationWindow(travel[0])
+def main(result, slider_values, vaccination_control, travel_control):
+    if travel_control[0]:
+        Constants.POPULATION = TRAVEL_POPULATION
+    anim_w = AnimationWindow(travel_control[0])
     updateSliderControls(slider_values)
     while AnimationWindow.running:
         AnimationWindow.running = anim_w.main_loop()
@@ -1037,7 +1046,7 @@ def main(result, slider_values, vaccination_control, travel):
             for population in populations:
                 population.Vaccinate(vaccination_percentage)
 
-        if travel:
+        if travel_control[0]:
             Travel()
 
         if result[3] == 1:
