@@ -42,6 +42,7 @@ class Constants:
     INFECTION_PROBABILITY = 0.7
     SOCIAL_DISTANCING_EFFECIENCY = 0.8
     PERCENTAGE_OF_POPULATION_SOCIAL_DISTANCING = 1
+    TOTAL_NUMBER_OF_INFECTED = 0
 
 
 populations = []
@@ -232,6 +233,7 @@ class Population:
                 False,
                 this,
             )
+            Constants.TOTAL_NUMBER_OF_INFECTED += 1
             this.susceptible_population.append(infected.id)
             infected.Infect(0)
             this.all_population.append(infected)
@@ -591,6 +593,7 @@ class Person:
         )
         this.infection_start_frame = 0
         this.infection_end_frame = 0
+        this.infected_at_least_once = True if this.infected else False
 
         this.recovery_frame = 0
 
@@ -660,6 +663,10 @@ class Person:
 
     def Infect(this, current_frame):
         this.infected = True
+        if not this.infected_at_least_once:
+            this.infected_at_least_once = True
+            Constants.TOTAL_NUMBER_OF_INFECTED += 1
+
         this.Remove_From_Corresponding_Array()
         this.population.infected_population.append(this.id)
         # print(infected_population,len(infected_population))
@@ -1017,7 +1024,7 @@ def Travel():
             # )
 
 
-def main(result, slider_values, vaccination_control, travel_control):
+def main(result, slider_values, vaccination_control, travel_control, labelValues):
     if travel_control[0]:
         Constants.POPULATION = TRAVEL_POPULATION
     anim_w = AnimationWindow(travel_control[0])
@@ -1054,10 +1061,10 @@ def main(result, slider_values, vaccination_control, travel_control):
 
 
 def testing_main():
-    anim_w = AnimationWindow(True)
+    anim_w = AnimationWindow(False)
     while AnimationWindow.running:
         AnimationWindow.running = anim_w.main_loop()
-        Travel()
+        # Travel()
 
 
-# testing_main()
+testing_main()

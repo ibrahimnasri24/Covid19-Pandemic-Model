@@ -61,6 +61,8 @@ class GraphGUI(tk.Frame):
     def __init__(this, parent, controller):
         tk.Frame.__init__(this, parent)
 
+        this.labelValues = [0]
+
         this.first_time = True
         this.graph = Graph.Graph()
         this.canvas = FigureCanvasTkAgg(this.graph.fig, master=this)
@@ -113,6 +115,10 @@ class GraphGUI(tk.Frame):
         travel["values"] = ("Without Travelling", "With Travelling")
         travel.configure(font=("Ariel", 14))
 
+        percentage_of_infection_of_vaccinated = ValueLabels(
+            this, "Percentage of infection of people vaccinated once:", 0, True
+        )
+
         # button_goto_settings = ttk.Button(
         #     this, text="Settings", command=lambda: controller.show_frame(SettingsGUI)
         # )
@@ -151,6 +157,10 @@ class GraphGUI(tk.Frame):
 
         travel.grid(column=7, row=7, padx=5, pady=5)
 
+        row_i = 6
+        for valueLabel in ValueLabels.value_labels:
+            valueLabel.frame.grid(column=0, row=row_i, columnspan=4, sticky="we")
+
         button_start.grid(column=7, row=8, pady=5, padx=5)
 
         # button_goto_settings.grid(column=0, row=10, padx=5, pady=5)
@@ -175,6 +185,7 @@ class GraphGUI(tk.Frame):
             this.slider_values = multiprocessing.Array("d", 6)
             this.vaccination_control = multiprocessing.Array("d", 2)
             this.travel_control = multiprocessing.Array("b", 1)
+            this.labelValues = multiprocessing.Array("b", 4)
             this.graph.mainfunc(this.result, this.canvas)
         else:
             this.graph.reset()
@@ -193,6 +204,11 @@ class GraphGUI(tk.Frame):
         this.vaccination_control[0] = 0  # Bool to signal vaccination
         this.vaccination_control[1] = 0  # Vaccination Percentage
 
+        this.labelValues[0] = 0
+        this.labelValues[1] = 0
+        this.labelValues[2] = 0
+        this.labelValues[3] = 0
+
         travel = False
         if this.travelVar.get() == "With Travelling":
             travel = True
@@ -205,6 +221,7 @@ class GraphGUI(tk.Frame):
                 this.slider_values,
                 this.vaccination_control,
                 this.travel_control,
+                this.labelValues,
             ),
         )
         p2.start()
@@ -361,12 +378,44 @@ class Slider:
 
 
 class ValueLabels:
-    def __init__(this):
-        pass
+    value_labels = []
+
+    def __init__(
+        this,
+        parent,
+        label,
+        index_in_shared_arr,
+        percentage,
+        initial_value=0,
+    ):
+        this.value = initial_value
+        this.frame = ttk.Frame(parent)
+        label = ttk.Label(this.frame, text=label)
+        label.configure(font=("Ariel", 14))
+        this.label_of_value = ttk.Label(this.frame, text=this.value)
+        this.label_of_value.configure(font=("Ariel", 14), anchor="w")
+
+        this.index = index_in_shared_arr
+
+        this.frame.grid(column=0, row=0)
+        label.grid(column=0, row=0, sticky="w")
+        this.label_of_value.grid(column=1, row=0, sticky="w")
+
+        this.frame.columnconfigure(0, weight=6)
+        this.frame.columnconfigure(1, weight=1)
+        this.frame.rowconfigure(0, weight=1)
+
+        ValueLabels.value_labels.append(this)
+
+    def updateValueLabels(root):
+        for valueLabel in ValueLabels.value_labels:
+            valueLabel.label_of_value["text"] = str(root.labelValues[valueLabel.index])
+        root.after(150, ValueLabels.updateValueLabels, app.graph_gui)
 
 
 if __name__ == "__main__":
     app = tkinterApp()
+    app.graph_gui.after(0, ValueLabels.updateValueLabels, app.graph_gui)
     tk.mainloop()
     try:
         app.graph_gui.result[3] = 1  # setting exit flag to 1
