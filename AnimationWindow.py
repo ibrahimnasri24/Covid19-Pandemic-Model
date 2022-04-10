@@ -257,7 +257,8 @@ class Population:
         number_of_vaccination = int(this.number_of_population * percentage_vaccination)
         for i in range(number_of_vaccination):
             index = rn.randint(0, this.number_of_population - 1)
-            this.all_population[index].Vaccinate(AnimationWindow.frame)
+            if this.all_population[index]:
+                this.all_population[index].Vaccinate(AnimationWindow.frame)
 
     def draw(this, surface):
         for person in this.all_population:
@@ -545,9 +546,11 @@ class Population:
                     < Constants.PERCENTAGE_OF_POPULATION_SOCIAL_DISTANCING
                     * population.number_of_population
                 ):
-                    population.all_population[i].social_distancing = True
+                    if population.all_population[i]:
+                        population.all_population[i].social_distancing = True
                 else:
-                    population.all_population[i].social_distancing = False
+                    if population.all_population[i]:
+                        population.all_population[i].social_distancing = False
 
 
 class Person:
