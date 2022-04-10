@@ -37,7 +37,7 @@ class Constants:
     POPULATION = 50
     INFECTION_RADIUS = 8
     SOCIAL_DISTANCE_RADIUS = 10
-    INFECTION_PROBABILITY = 0.7
+    INFECTION_PROBABILITY = 1
     SOCIAL_DISTANCING_EFFECIENCY = 0.8
     PERCENTAGE_OF_POPULATION_SOCIAL_DISTANCING = 1
 
@@ -146,10 +146,10 @@ class AnimationWindow:
             pyg.draw.rect(DISPLAYSURF, BLACK, population.boundary, 2)
             population.draw(DISPLAYSURF)
             InfectionRadiusAnimation.draw(population, DISPLAYSURF)
+            population.collision_boundary()
+            population.collision()
             population.move()
             population.recovery()
-            population.collision()
-            population.collision_boundary()
             this.infected_population_counter += len(population.infected_population)
             this.recovered_population_counter += len(population.recovered_population)
             # print(len(susceptible_population),len(infected_population),len(recovered_population))
@@ -555,7 +555,6 @@ class Population:
 
 class Person:
     radius = RADIUS
-    velocity_magnitude = VELOCITY
     offset = OFFSET
     reflection_strength = VELOCITY / 4
 
@@ -565,9 +564,10 @@ class Person:
         this.y = y
         this.direction = direction
         this.population = population
+        this.velocity_magnitude = VELOCITY
         this.v = [
-            math.cos(math.radians(direction)) * Person.velocity_magnitude,
-            math.sin(math.radians(direction)) * Person.velocity_magnitude,
+            math.cos(math.radians(direction)) * this.velocity_magnitude,
+            math.sin(math.radians(direction)) * this.velocity_magnitude,
         ]
         this.color = BLUE
 
@@ -595,11 +595,13 @@ class Person:
         this.number_of_vaccination = 0
         this.vaccination = {"1": 0, "2": 0}
 
+        this.travelling = False
+
     def move(this):
         this.grid_cells.clear()
         this.circles_indexes_in_collision.clear()
 
-        wander_step = rn.normalvariate(0, 0.8) * Person.velocity_magnitude * 0.3
+        wander_step = rn.normalvariate(0, 0.8) * this.velocity_magnitude * 0.3
         if rn.random() > 0.5:
             this.v[0] += wander_step
         else:
@@ -623,14 +625,31 @@ class Person:
         pyg.draw.circle(surface, this.color, (this.x, this.y), this.radius, 0)
 
     def collision_boundary(this, boundary):
+        if this.x - this.radius < 0:
+            this.v[0] *= -1
+        if this.x + this.radius > AnimationWindow.window_width:
+            this.v[0] *= -1
+        if this.y - this.radius < 0:
+            this.v[1] *= -1
+        if this.y + this.radius > AnimationWindow.window_height:
+            this.v[1] *= -1
+
+        person_outside_bounds = False
         if this.x - this.radius < boundary[0] + Person.offset:
             this.v[0] += Person.reflection_strength
+            person_outside_bounds = True
         if this.x + this.radius > boundary[2] + boundary[0] - Person.offset:
             this.v[0] -= Person.reflection_strength
+            person_outside_bounds = True
         if this.y - this.radius < boundary[1] + Person.offset:
             this.v[1] += Person.reflection_strength
+            person_outside_bounds = True
         if this.y + this.radius > boundary[3] + boundary[1] - Person.offset:
             this.v[1] -= Person.reflection_strength
+            person_outside_bounds = True
+        if not person_outside_bounds and this.travelling:
+            this.travelling = False
+            this.velocity_magnitude /= 3
 
     def Infect(this, current_frame):
         this.infected = True
@@ -881,92 +900,119 @@ def updateSliderControls(slider_values):
 
 
 def Travel():
-    population_index_source = rn.randint(0, 5)
-    population_index_destination = population_index_source
-    while population_index_destination == population_index_source:
-        population_index_destination = rn.randint(0, 5)
-    traveling_person_index = rn.randint(
-        0, populations[population_index_source].number_of_population - 1
-    )
-    while (
-        traveling_person_index
-        in populations[population_index_source].traveled_persons_ids
-    ):
-        traveling_person_index = rn.randint(
-            0, populations[population_index_source].number_of_population - 1
-        )
-    populations[population_index_source].traveled_persons_ids.append(
-        traveling_person_index
-    )
-    traveling_person = populations[population_index_source].all_population[
-        traveling_person_index
-    ]
-    populations[population_index_source].all_population[traveling_person_index] = None
-    try:
-        for id in traveling_person.circles_indexes_in_collision:
-            all_population[id].circles_indexes_in_collision.remove(old_id)
-        for id in traveling_person.circles_indexes_sdist_overlap:
-            all_population[id].circles_indexes_sdist_overlap.remove(old_id)
-        for id in traveling_person.circles_indexes_infect_overlap:
-            all_population[id].circles_indexes_infect_overlap.remove(old_id)
-    except:
-        pass
+    if AnimationWindow.frame % 20 == 0:
+        for i in range(1):
+            population_index_source = rn.randint(0, 5)
+            population_index_destination = population_index_source
+            while population_index_destination == population_index_source:
+                population_index_destination = rn.randint(0, 5)
+            traveling_person_index = rn.randint(
+                0, populations[population_index_source].number_of_population - 1
+            )
+            while (
+                traveling_person_index
+                in populations[population_index_source].traveled_persons_ids
+            ):
+                traveling_person_index = rn.randint(
+                    0, populations[population_index_source].number_of_population - 1
+                )
+            populations[population_index_source].traveled_persons_ids.append(
+                traveling_person_index
+            )
+            traveling_person = populations[population_index_source].all_population[
+                traveling_person_index
+            ]
+            populations[population_index_source].all_population[
+                traveling_person_index
+            ] = None
+            try:
+                for id in traveling_person.circles_indexes_in_collision:
+                    all_population[id].circles_indexes_in_collision.remove(old_id)
+                for id in traveling_person.circles_indexes_sdist_overlap:
+                    all_population[id].circles_indexes_sdist_overlap.remove(old_id)
+                for id in traveling_person.circles_indexes_infect_overlap:
+                    all_population[id].circles_indexes_infect_overlap.remove(old_id)
+            except:
+                pass
 
-    traveling_person.circles_indexes_in_collision = []
-    traveling_person.circles_indexes_sdist_overlap = []
-    traveling_person.circles_indexes_infect_overlap = []
+            traveling_person.circles_indexes_in_collision = []
+            traveling_person.circles_indexes_sdist_overlap = []
+            traveling_person.circles_indexes_infect_overlap = []
 
-    old_id = traveling_person.id
-    new_id = populations[population_index_destination].number_of_population
-    traveling_person.id = new_id
-    traveling_person.population = populations[population_index_destination]
-    populations[population_index_destination].number_of_population += 1
-    populations[population_index_destination].all_population.append(traveling_person)
+            old_id = traveling_person.id
+            new_id = populations[population_index_destination].number_of_population
+            traveling_person.id = new_id
+            traveling_person.travelling = True
+            # v = traveling_person.v
+            # traveling_person.v = [v[0] * 5, v[1] * 5]
+            traveling_person.velocity_magnitude *= 3
+            traveling_person.population = populations[population_index_destination]
+            populations[population_index_destination].number_of_population += 1
+            populations[population_index_destination].all_population.append(
+                traveling_person
+            )
 
-    if old_id in populations[population_index_source].susceptible_population:
-        populations[population_index_source].susceptible_population.remove(old_id)
-        populations[population_index_destination].susceptible_population.append(new_id)
+            if old_id in populations[population_index_source].susceptible_population:
+                populations[population_index_source].susceptible_population.remove(
+                    old_id
+                )
+                populations[population_index_destination].susceptible_population.append(
+                    new_id
+                )
 
-    if old_id in populations[population_index_source].infected_population:
-        populations[population_index_source].infected_population.remove(old_id)
-        populations[population_index_destination].infected_population.append(new_id)
+            if old_id in populations[population_index_source].infected_population:
+                populations[population_index_source].infected_population.remove(old_id)
+                populations[population_index_destination].infected_population.append(
+                    new_id
+                )
 
-    if traveling_person.infected:
-        InfectionRadiusAnimation.Remove(old_id, populations[population_index_source])
-        InfectionRadiusAnimation(
-            new_id, populations[population_index_destination], traveling=True
-        )
-        # print(
-        #     "-----",
-        #     len(populations[population_index_source].infection_radius_animation),
-        #     len(populations[population_index_destination].infection_radius_animation),
-        # )
-    else:
-        populations[population_index_destination].infection_radius_animation.append(
-            None
-        )
+            if traveling_person.infected:
+                InfectionRadiusAnimation.Remove(
+                    old_id, populations[population_index_source]
+                )
+                InfectionRadiusAnimation(
+                    new_id, populations[population_index_destination], traveling=True
+                )
+                # print(
+                #     "-----",
+                #     len(populations[population_index_source].infection_radius_animation),
+                #     len(populations[population_index_destination].infection_radius_animation),
+                # )
+            else:
+                populations[
+                    population_index_destination
+                ].infection_radius_animation.append(None)
 
-    if old_id in populations[population_index_source].recovered_population:
-        populations[population_index_source].recovered_population.remove(old_id)
-        populations[population_index_destination].recovered_population.append(new_id)
+            if old_id in populations[population_index_source].recovered_population:
+                populations[population_index_source].recovered_population.remove(old_id)
+                populations[population_index_destination].recovered_population.append(
+                    new_id
+                )
 
-    if old_id in populations[population_index_source].vaccinated1_population:
-        populations[population_index_source].vaccinated1_population.remove(old_id)
-        populations[population_index_destination].vaccinated1_population.append(new_id)
+            if old_id in populations[population_index_source].vaccinated1_population:
+                populations[population_index_source].vaccinated1_population.remove(
+                    old_id
+                )
+                populations[population_index_destination].vaccinated1_population.append(
+                    new_id
+                )
 
-    if old_id in populations[population_index_source].vaccinated2_population:
-        populations[population_index_source].vaccinated2_population.remove(old_id)
-        populations[population_index_destination].vaccinated2_population.append(new_id)
+            if old_id in populations[population_index_source].vaccinated2_population:
+                populations[population_index_source].vaccinated2_population.remove(
+                    old_id
+                )
+                populations[population_index_destination].vaccinated2_population.append(
+                    new_id
+                )
 
-    # print(
-    #     f"Travel: source: {population_index_source} dest: {population_index_destination}"
-    # )
+            # print(
+            #     f"Travel: source: {population_index_source} dest: {population_index_destination}"
+            # )
 
 
 def main(result, slider_values, vaccination_control, travel):
-    anim_w = AnimationWindow(travel)
+    anim_w = AnimationWindow(travel[0])
     updateSliderControls(slider_values)
-    Travel()
     while AnimationWindow.running:
         AnimationWindow.running = anim_w.main_loop()
         result[0] = AnimationWindow.frame
@@ -984,11 +1030,15 @@ def main(result, slider_values, vaccination_control, travel):
         ) * 100
 
         updateSliderControls(slider_values)
+
         if vaccination_control[0] == 1:
             vaccination_control[0] = 0
             vaccination_percentage = vaccination_control[1] / 100
             for population in populations:
                 population.Vaccinate(vaccination_percentage)
+
+        if travel:
+            Travel()
 
         if result[3] == 1:
             break
@@ -996,9 +1046,9 @@ def main(result, slider_values, vaccination_control, travel):
 
 def testing_main():
     anim_w = AnimationWindow(True)
-    Travel()
     while AnimationWindow.running:
         AnimationWindow.running = anim_w.main_loop()
+        Travel()
 
 
-# testing_main()
+testing_main()

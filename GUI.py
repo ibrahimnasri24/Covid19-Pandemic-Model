@@ -105,8 +105,6 @@ class GraphGUI(tk.Frame):
         numeric_input_vaccinate = NumericInput(
             this,
             "Percantage of\nPopulation to Vaccinate:",
-            GraphGUI.Vaccinate,
-            0,
             initial_value=0,
         )
 
@@ -169,6 +167,7 @@ class GraphGUI(tk.Frame):
             this.result = multiprocessing.Array("d", 4)
             this.slider_values = multiprocessing.Array("d", 6)
             this.vaccination_control = multiprocessing.Array("d", 2)
+            this.travel_control = multiprocessing.Array("b", 1)
             this.graph.mainfunc(this.result, this.canvas)
         else:
             this.graph.reset()
@@ -186,10 +185,18 @@ class GraphGUI(tk.Frame):
 
         this.vaccination_control[0] = 0  # Bool to signal vaccination
         this.vaccination_control[1] = 0  # Vaccination Percentage
+
         travel = True
+        this.travel_control[0] = travel
+
         p2 = multiprocessing.Process(
             target=AnimationWindow.main,
-            args=(this.result, this.slider_values, this.vaccination_control, travel),
+            args=(
+                this.result,
+                this.slider_values,
+                this.vaccination_control,
+                this.travel_control,
+            ),
         )
         p2.start()
 
@@ -243,8 +250,6 @@ class NumericInput:
         this,
         parent,
         label,
-        command,
-        index_in_shared_arr,
         from_=0,
         to_=100,
         initial_value=0,
@@ -344,6 +349,23 @@ class Slider:
         graph_gui = tkinterApp.apps[0].graph_gui
         if not graph_gui.first_time:
             graph_gui.slider_values[this.index] = val
+
+
+class ComboBox:
+    comboBoxes = []
+
+    def __init__(this, parent, label, values: list):
+        this.frame = tk.Frame(parent)
+
+        travelVar = StringVar()
+        travel = ttk.Combobox(this.frame, textvariable=travelVar)
+        travel["values"] = ("Without Travelling", "With Traveling")
+        travel.bind("<<ComboboxSelected>>", ComboBox.comboBoxSelectionChanged)
+
+        ComboBox.comboBoxes.append(this)
+
+    def comboBoxSelectionChanged():
+        pass
 
 
 if __name__ == "__main__":
