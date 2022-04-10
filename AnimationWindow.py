@@ -37,7 +37,7 @@ class Constants:
     POPULATION = 50
     INFECTION_RADIUS = 8
     SOCIAL_DISTANCE_RADIUS = 10
-    INFECTION_PROBABILITY = 1
+    INFECTION_PROBABILITY = 0.7
     SOCIAL_DISTANCING_EFFECIENCY = 0.8
     PERCENTAGE_OF_POPULATION_SOCIAL_DISTANCING = 1
 
@@ -146,10 +146,10 @@ class AnimationWindow:
             pyg.draw.rect(DISPLAYSURF, BLACK, population.boundary, 2)
             population.draw(DISPLAYSURF)
             InfectionRadiusAnimation.draw(population, DISPLAYSURF)
-            population.collision_boundary()
-            population.collision()
             population.move()
             population.recovery()
+            population.collision()
+            population.collision_boundary()
             this.infected_population_counter += len(population.infected_population)
             this.recovered_population_counter += len(population.recovered_population)
             # print(len(susceptible_population),len(infected_population),len(recovered_population))
@@ -1051,4 +1051,4 @@ def testing_main():
         Travel()
 
 
-testing_main()
+# testing_main()
