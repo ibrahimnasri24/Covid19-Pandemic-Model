@@ -61,7 +61,7 @@ class GraphGUI(tk.Frame):
     def __init__(this, parent, controller):
         tk.Frame.__init__(this, parent)
 
-        this.labelValues = [0]
+        this.labelValues = [0, 0]
 
         this.first_time = True
         this.graph = Graph.Graph()
@@ -115,9 +115,8 @@ class GraphGUI(tk.Frame):
         travel["values"] = ("Without Travelling", "With Travelling")
         travel.configure(font=("Ariel", 14))
 
-        percentage_of_infection_of_vaccinated = ValueLabels(
-            this, "Percentage of infection of people vaccinated once:", 0, True
-        )
+        ValueLabels(this, "Reproduction Number: ", 0, False)
+        ValueLabels(this, "Number of persons infected at least once: ", 1, True)
 
         # button_goto_settings = ttk.Button(
         #     this, text="Settings", command=lambda: controller.show_frame(SettingsGUI)
@@ -159,7 +158,10 @@ class GraphGUI(tk.Frame):
 
         row_i = 6
         for valueLabel in ValueLabels.value_labels:
-            valueLabel.frame.grid(column=0, row=row_i, columnspan=4, sticky="we")
+            valueLabel.frame.grid(
+                column=0, row=row_i, columnspan=4, sticky="w", padx=30
+            )
+            row_i += 1
 
         button_start.grid(column=7, row=8, pady=5, padx=5)
 
@@ -185,7 +187,7 @@ class GraphGUI(tk.Frame):
             this.slider_values = multiprocessing.Array("d", 6)
             this.vaccination_control = multiprocessing.Array("d", 2)
             this.travel_control = multiprocessing.Array("b", 1)
-            this.labelValues = multiprocessing.Array("b", 4)
+            this.labelValues = multiprocessing.Array("d", 4)
             this.graph.mainfunc(this.result, this.canvas)
         else:
             this.graph.reset()
@@ -409,7 +411,14 @@ class ValueLabels:
 
     def updateValueLabels(root):
         for valueLabel in ValueLabels.value_labels:
-            valueLabel.label_of_value["text"] = str(root.labelValues[valueLabel.index])
+            if valueLabel.index == 1:
+                valueLabel.label_of_value["text"] = "{:.0f}".format(
+                    root.labelValues[valueLabel.index]
+                )
+            else:
+                valueLabel.label_of_value["text"] = "{:.1f}".format(
+                    root.labelValues[valueLabel.index]
+                )
         root.after(150, ValueLabels.updateValueLabels, app.graph_gui)
 
 

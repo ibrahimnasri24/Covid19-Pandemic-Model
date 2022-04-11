@@ -8,6 +8,8 @@ class Graph:
         self.fig = plt.figure()
         self.ax = plt.gca()
         self.ax.set_ylim(0, 100)
+        self.ax.set_xlabel("Days")
+        self.ax.set_ylabel("Percentage %")
 
         self.x = []
         self.y = []
@@ -43,6 +45,6 @@ class Graph:
 
     def mainfunc(self, result, canvas):
         anim = animation.FuncAnimation(
-            self.fig, self.animate, frames=self.frames(result), interval=150, blit=False
+            self.fig, self.animate, frames=self.frames(result), interval=200, blit=False
         )
         canvas.draw()
