@@ -31,7 +31,7 @@ BOUNDARY_HEIGHT_TRAVEL = 300
 FRAMES_PER_DAY = 30
 OFFSET = 70
 
-TRAVEL_SPEED = 3
+TRAVEL_SPEED = 4
 TRAVEL_POPULATION = 40
 
 
@@ -646,18 +646,20 @@ class Person:
             this.y = AnimationWindow.window_height - this.radius - 45
             this.v[1] *= -1
 
+        reflection_strength = this.velocity_magnitude / 4
+
         person_outside_bounds = False
         if this.x - this.radius < boundary[0] + Person.offset:
-            this.v[0] += Person.reflection_strength
+            this.v[0] += reflection_strength
             person_outside_bounds = True
         if this.x + this.radius > boundary[2] + boundary[0] - Person.offset:
-            this.v[0] -= Person.reflection_strength
+            this.v[0] -= reflection_strength
             person_outside_bounds = True
         if this.y - this.radius < boundary[1] + Person.offset:
-            this.v[1] += Person.reflection_strength
+            this.v[1] += reflection_strength
             person_outside_bounds = True
         if this.y + this.radius > boundary[3] + boundary[1] - Person.offset:
-            this.v[1] -= Person.reflection_strength
+            this.v[1] -= reflection_strength
             person_outside_bounds = True
         if not person_outside_bounds and this.travelling:
             this.travelling = False
@@ -1038,7 +1040,7 @@ def updateLabelValues(labelValues):
         R /= count
     labelValues[0] = R
 
-    labelValues[1] = Constants.NB_OF_PERSONS_THAT_HAD_COVID
+    labelValues[1] = Constants.NB_OF_PERSONS_THAT_HAD_COVID - 1
 
 
 def main(result, slider_values, vaccination_control, travel_control, labelValues):
