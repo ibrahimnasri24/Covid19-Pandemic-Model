@@ -210,7 +210,7 @@ class Population:
                 social_distancing,
                 this,
             )
-            print(person.x, person.y)
+            # print(person.x, person.y)
             this.all_population.append(person)
             this.susceptible_population.append(person.id)
 
